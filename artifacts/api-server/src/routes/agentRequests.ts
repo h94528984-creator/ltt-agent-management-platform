@@ -10,7 +10,6 @@ import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
-// Ensure uploads directory exists
 const uploadDir = path.join(process.cwd(), "uploads", "agent-requests");
 fs.mkdirSync(uploadDir, { recursive: true });
 
@@ -24,7 +23,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024, files: 5 },
+  limits: { fileSize: 5 * 1024 * 1024, files: 15 },
   fileFilter: (_req, file, cb) => {
     const allowed = [".jpg", ".jpeg", ".png", ".pdf"];
     const ext = path.extname(file.originalname).toLowerCase();
@@ -33,11 +32,16 @@ const upload = multer({
   },
 });
 
+const uploadFields = upload.fields([
+  { name: "sitePhotos", maxCount: 5 },
+  { name: "interiorPhotos", maxCount: 5 },
+  { name: "equipmentPhotos", maxCount: 5 },
+]);
+
 function generateRequestId(): string {
-  const prefix = "LTT";
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const rand = randomBytes(3).toString("hex").toUpperCase();
-  return `${prefix}-${date}-${rand}`;
+  return `LTT-${date}-${rand}`;
 }
 
 function calcReadinessScore(data: {
@@ -57,23 +61,30 @@ function calcReadinessScore(data: {
 
 function calcSalesScore(data: {
   areaTraffic: string;
-  nearCompetitors: string;
-  dailySalesEstimate: number;
+  marketDensitySameStreet: number;
+  transactionVolumeAdsl: number;
+  transactionVolume4g: number;
 }): number {
   let score = 0;
+
   if (data.areaTraffic === "high") score += 40;
   else if (data.areaTraffic === "medium") score += 25;
   else score += 10;
 
-  if (data.nearCompetitors === "far") score += 30;
-  else if (data.nearCompetitors === "medium") score += 20;
-  else score += 10;
+  // Fewer competitors on same street = better
+  const street = data.marketDensitySameStreet;
+  if (street === 0) score += 30;
+  else if (street === 1) score += 22;
+  else if (street === 2) score += 15;
+  else if (street <= 4) score += 8;
+  else score += 3;
 
-  const est = data.dailySalesEstimate;
-  if (est >= 1000) score += 30;
-  else if (est >= 500) score += 22;
-  else if (est >= 200) score += 15;
-  else if (est >= 100) score += 8;
+  // Transaction volume (ADSL + 4G combined)
+  const totalTx = (data.transactionVolumeAdsl || 0) + (data.transactionVolume4g || 0);
+  if (totalTx >= 1000) score += 30;
+  else if (totalTx >= 500) score += 22;
+  else if (totalTx >= 200) score += 15;
+  else if (totalTx >= 50) score += 8;
   else score += 3;
 
   return Math.min(100, score);
@@ -83,13 +94,10 @@ function calcComplianceScore(data: {
   documentsComplete: boolean;
   brandIdentityCompliant: boolean;
 }): number {
-  let score = 0;
-  if (data.documentsComplete) score += 50;
-  if (data.brandIdentityCompliant) score += 50;
-  return score;
+  return (data.documentsComplete ? 50 : 0) + (data.brandIdentityCompliant ? 50 : 0);
 }
 
-async function sendEmail(requestId: string, employeeName: string, data: Record<string, unknown>, finalScore: number) {
+async function sendEmail(requestId: string, representativeName: string, data: Record<string, unknown>, finalScore: number) {
   const smtpHost = process.env["SMTP_HOST"];
   const smtpUser = process.env["SMTP_USER"];
   const smtpPass = process.env["SMTP_PASS"];
@@ -99,30 +107,35 @@ async function sendEmail(requestId: string, employeeName: string, data: Record<s
 طلب إنشاء وكيل جديد
 ====================
 رقم الطلب: ${requestId}
-الموظف: ${employeeName}
+المندوب: ${representativeName}
 التاريخ: ${new Date().toLocaleString("ar-LY")}
 
 بيانات الوكيل:
 - الاسم: ${data["agentName"]}
-- الهاتف: ${data["phone"]}
+- الجوال: ${data["mobile"]}
+- الهاتف الثابت: ${data["landline"] ?? "—"}
+- البريد الإلكتروني: ${data["agentEmail"] ?? "—"}
 - المدينة: ${data["city"]}
-- النوع: ${data["agentType"]}
+- العنوان الكامل: ${data["fullAddress"] ?? "—"}
+- نوع النشاط: ${data["activityType"]}
 - إحداثيات الموقع: ${data["latitude"] ?? "غير محدد"}, ${data["longitude"] ?? "غير محدد"}
 
 الجاهزية التشغيلية:
-- لوحة إعلانية: ${data["hasSignboard"] ? "نعم" : "لا"}
-- أجهزة: ${data["hasDevices"] ? "نعم" : "لا"}
+- لوحة إعلانية: ${data["hasSignboard"] === "true" ? "نعم" : "لا"}
+- أجهزة: ${data["hasDevices"] === "true" ? "نعم" : "لا"}
 - جودة الإنترنت: ${data["internetQuality"]}
 - جاهزية الموظفين: ${data["staffReadiness"]}/5
 
-إمكانية المبيعات:
+إمكانية السوق:
 - حركة المنطقة: ${data["areaTraffic"]}
-- قربه من المنافسين: ${data["nearCompetitors"]}
-- تقدير المبيعات اليومية: ${data["dailySalesEstimate"]}
+- عدد المنافسين في المدينة: ${data["marketDensitySameCity"]}
+- عدد المنافسين في الشارع: ${data["marketDensitySameStreet"]}
+- حجم معاملات ADSL (شهري): ${data["transactionVolumeAdsl"]}
+- حجم معاملات 4G (شهري): ${data["transactionVolume4g"]}
 
 الامتثال:
-- مستندات مكتملة: ${data["documentsComplete"] ? "نعم" : "لا"}
-- التزام بالهوية البصرية: ${data["brandIdentityCompliant"] ? "نعم" : "لا"}
+- مستندات مكتملة: ${data["documentsComplete"] === "true" ? "نعم" : "لا"}
+- الهوية البصرية: ${data["brandIdentityCompliant"] === "true" ? "نعم" : "لا"}
 
 الملاحظات: ${data["notes"] ?? "لا يوجد"}
 
@@ -135,8 +148,7 @@ async function sendEmail(requestId: string, employeeName: string, data: Record<s
   }
 
   const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
+    host: smtpHost, port: smtpPort,
     secure: smtpPort === 465,
     auth: { user: smtpUser, pass: smtpPass },
   });
@@ -144,26 +156,28 @@ async function sendEmail(requestId: string, employeeName: string, data: Record<s
   await transporter.sendMail({
     from: `"منصة LTT" <${smtpUser}>`,
     to: ["y.rahuma@ltt.ly", "s.zawia@ltt.ly"],
-    subject: `طلب إنشاء وكيل جديد - ${requestId}`,
+    subject: `طلب إنشاء وكيل جديد - ${requestId} - ${data["agentName"]}`,
     text: emailBody,
   });
 }
 
 // POST /api/agent-request — public, no auth required
-router.post("/agent-request", upload.array("images", 5), async (req, res): Promise<void> => {
+router.post("/agent-request", uploadFields, async (req, res): Promise<void> => {
   try {
     const body = req.body as Record<string, string>;
-    const files = (req.files as Express.Multer.File[]) ?? [];
+    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
 
     const {
-      employeeName, employeeEmail, agentName, phone, city, agentType,
+      representativeName, representativeEmail,
+      agentName, mobile, landline, agentEmail, city, fullAddress, activityType,
       latitude, longitude, locationDescription,
       hasSignboard, hasDevices, internetQuality, staffReadiness,
-      areaTraffic, nearCompetitors, dailySalesEstimate,
+      areaTraffic, marketDensitySameCity, marketDensitySameStreet,
+      transactionVolumeAdsl, transactionVolume4g,
       documentsComplete, brandIdentityCompliant, notes,
     } = body;
 
-    if (!employeeName || !agentName || !phone || !city || !agentType) {
+    if (!representativeName || !agentName || !mobile || !city || !activityType) {
       res.status(400).json({ error: "يرجى ملء جميع الحقول المطلوبة" });
       return;
     }
@@ -173,7 +187,10 @@ router.post("/agent-request", upload.array("images", 5), async (req, res): Promi
     const parsedDocumentsComplete = documentsComplete === "true";
     const parsedBrandIdentityCompliant = brandIdentityCompliant === "true";
     const parsedStaffReadiness = parseInt(staffReadiness ?? "3") || 3;
-    const parsedDailySalesEstimate = parseInt(dailySalesEstimate ?? "0") || 0;
+    const parsedMarketCity = parseInt(marketDensitySameCity ?? "0") || 0;
+    const parsedMarketStreet = parseInt(marketDensitySameStreet ?? "0") || 0;
+    const parsedTxAdsl = parseInt(transactionVolumeAdsl ?? "0") || 0;
+    const parsedTx4g = parseInt(transactionVolume4g ?? "0") || 0;
 
     const readinessScore = calcReadinessScore({
       hasSignboard: parsedHasSignboard,
@@ -184,8 +201,9 @@ router.post("/agent-request", upload.array("images", 5), async (req, res): Promi
 
     const salesScore = calcSalesScore({
       areaTraffic: areaTraffic ?? "medium",
-      nearCompetitors: nearCompetitors ?? "medium",
-      dailySalesEstimate: parsedDailySalesEstimate,
+      marketDensitySameStreet: parsedMarketStreet,
+      transactionVolumeAdsl: parsedTxAdsl,
+      transactionVolume4g: parsedTx4g,
     });
 
     const complianceScore = calcComplianceScore({
@@ -194,20 +212,27 @@ router.post("/agent-request", upload.array("images", 5), async (req, res): Promi
     });
 
     const finalScore = Math.round(0.4 * readinessScore + 0.35 * salesScore + 0.25 * complianceScore);
-
     const requestId = generateRequestId();
 
     const basePath = process.env["BASE_PATH"] ?? "/api";
-    const imageUrls = files.map((f) => `${basePath}/agent-request/uploads/${f.filename}`);
+    const toUrls = (arr: Express.Multer.File[] | undefined) =>
+      (arr ?? []).map(f => `${basePath}/agent-request/uploads/${f.filename}`);
+
+    const sitePhotoUrls = toUrls(files?.["sitePhotos"]);
+    const interiorPhotoUrls = toUrls(files?.["interiorPhotos"]);
+    const equipmentPhotoUrls = toUrls(files?.["equipmentPhotos"]);
 
     const [saved] = await db.insert(agentRequestsTable).values({
       requestId,
-      employeeName,
-      employeeEmail: employeeEmail ?? `${employeeName.replace(/\s/g, ".")}@ltt.ly`,
+      representativeName,
+      representativeEmail: representativeEmail ?? `${representativeName.replace(/\s/g, ".")}@ltt.ly`,
       agentName,
-      phone,
+      mobile,
+      landline: landline ?? undefined,
+      agentEmail: agentEmail ?? undefined,
       city,
-      agentType,
+      fullAddress: fullAddress ?? undefined,
+      activityType,
       latitude: latitude ? parseFloat(latitude) : undefined,
       longitude: longitude ? parseFloat(longitude) : undefined,
       locationDescription: locationDescription ?? undefined,
@@ -216,8 +241,10 @@ router.post("/agent-request", upload.array("images", 5), async (req, res): Promi
       internetQuality: internetQuality ?? "medium",
       staffReadiness: parsedStaffReadiness,
       areaTraffic: areaTraffic ?? "medium",
-      nearCompetitors: nearCompetitors ?? "medium",
-      dailySalesEstimate: parsedDailySalesEstimate,
+      marketDensitySameCity: parsedMarketCity,
+      marketDensitySameStreet: parsedMarketStreet,
+      transactionVolumeAdsl: parsedTxAdsl,
+      transactionVolume4g: parsedTx4g,
       documentsComplete: parsedDocumentsComplete,
       brandIdentityCompliant: parsedBrandIdentityCompliant,
       notes: notes ?? undefined,
@@ -225,10 +252,12 @@ router.post("/agent-request", upload.array("images", 5), async (req, res): Promi
       salesScore,
       complianceScore,
       finalScore,
-      imageUrls,
+      sitePhotoUrls,
+      interiorPhotoUrls,
+      equipmentPhotoUrls,
     }).returning();
 
-    sendEmail(requestId, employeeName, body, finalScore).catch((err) => {
+    sendEmail(requestId, representativeName, body, finalScore).catch(err => {
       logger.error({ err }, "Failed to send email");
     });
 
@@ -243,22 +272,15 @@ router.post("/agent-request", upload.array("images", 5), async (req, res): Promi
 router.get("/agent-request/:requestId", async (req, res): Promise<void> => {
   const { requestId } = req.params;
   const [record] = await db.select().from(agentRequestsTable).where(eq(agentRequestsTable.requestId, requestId));
-  if (!record) {
-    res.status(404).json({ error: "الطلب غير موجود" });
-    return;
-  }
+  if (!record) { res.status(404).json({ error: "الطلب غير موجود" }); return; }
   res.json(record);
 });
 
 // Serve uploaded files
 router.get("/agent-request/uploads/:filename", (req, res): void => {
   const filename = req.params["filename"];
-  if (!filename || filename.includes("..")) {
-    res.status(400).json({ error: "Invalid filename" });
-    return;
-  }
-  const filePath = path.join(process.cwd(), "uploads", "agent-requests", filename);
-  res.sendFile(filePath);
+  if (!filename || filename.includes("..")) { res.status(400).json({ error: "Invalid filename" }); return; }
+  res.sendFile(path.join(process.cwd(), "uploads", "agent-requests", filename));
 });
 
 export default router;
