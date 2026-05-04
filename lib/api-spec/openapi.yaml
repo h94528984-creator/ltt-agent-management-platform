@@ -1,22 +1,30 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: LTT Sales Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: auth
+  - name: users
+  - name: agents
+  - name: inspections
+  - name: salesLogs
+  - name: tickets
+  - name: inventory
+  - name: scores
+  - name: notifications
+  - name: dashboard
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +32,835 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # AUTH
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  # USERS
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBody"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/bulk-import:
+    post:
+      operationId: bulkImportUsers
+      tags: [users]
+      summary: Bulk import users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkImportUsersBody"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkImportResult"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # AGENTS
+  /agents:
+    get:
+      operationId: listAgents
+      tags: [agents]
+      summary: List all agents
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Agent"
+    post:
+      operationId: createAgent
+      tags: [agents]
+      summary: Create a new agent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAgentBody"
+      responses:
+        "201":
+          description: Created agent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Agent"
+
+  /agents/bulk-import:
+    post:
+      operationId: bulkImportAgents
+      tags: [agents]
+      summary: Bulk import agents from CSV/Excel data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkImportAgentsBody"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkImportResult"
+
+  /agents/{id}:
+    get:
+      operationId: getAgent
+      tags: [agents]
+      summary: Get agent by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Agent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Agent"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateAgent
+      tags: [agents]
+      summary: Update agent
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAgentBody"
+      responses:
+        "200":
+          description: Updated agent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Agent"
+    delete:
+      operationId: deleteAgent
+      tags: [agents]
+      summary: Delete agent
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # INSPECTION REPORTS
+  /inspections:
+    get:
+      operationId: listInspections
+      tags: [inspections]
+      summary: List inspection reports
+      parameters:
+        - in: query
+          name: agentId
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: inspectorId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of inspection reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InspectionReport"
+    post:
+      operationId: createInspection
+      tags: [inspections]
+      summary: Create an inspection report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInspectionBody"
+      responses:
+        "201":
+          description: Created inspection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionReport"
+
+  /inspections/{id}:
+    get:
+      operationId: getInspection
+      tags: [inspections]
+      summary: Get inspection report by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Inspection report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionReport"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateInspection
+      tags: [inspections]
+      summary: Update inspection report
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInspectionBody"
+      responses:
+        "200":
+          description: Updated inspection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InspectionReport"
+
+  # INSPECTION SALES LOGS
+  /sales-logs:
+    get:
+      operationId: listSalesLogs
+      tags: [salesLogs]
+      summary: List inspection sales logs
+      parameters:
+        - in: query
+          name: agentId
+          schema:
+            type: integer
+        - in: query
+          name: inspectorId
+          schema:
+            type: integer
+        - in: query
+          name: complianceFlag
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of sales logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SalesLog"
+    post:
+      operationId: createSalesLog
+      tags: [salesLogs]
+      summary: Create a sales log entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSalesLogBody"
+      responses:
+        "201":
+          description: Created sales log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesLog"
+
+  /sales-logs/{id}:
+    get:
+      operationId: getSalesLog
+      tags: [salesLogs]
+      summary: Get sales log by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Sales log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesLog"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateSalesLog
+      tags: [salesLogs]
+      summary: Update sales log
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSalesLogBody"
+      responses:
+        "200":
+          description: Updated sales log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesLog"
+
+  # TICKETS
+  /tickets:
+    get:
+      operationId: listTickets
+      tags: [tickets]
+      summary: List tickets
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: assignedTo
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ticket"
+    post:
+      operationId: createTicket
+      tags: [tickets]
+      summary: Create a ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTicketBody"
+      responses:
+        "201":
+          description: Created ticket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+
+  /tickets/{id}:
+    get:
+      operationId: getTicket
+      tags: [tickets]
+      summary: Get ticket by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ticket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateTicket
+      tags: [tickets]
+      summary: Update ticket
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTicketBody"
+      responses:
+        "200":
+          description: Updated ticket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+
+  # INVENTORY
+  /inventory:
+    get:
+      operationId: listInventory
+      tags: [inventory]
+      summary: List inventory items
+      parameters:
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: lowStock
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of inventory items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryItem"
+    post:
+      operationId: createInventoryItem
+      tags: [inventory]
+      summary: Create inventory item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInventoryItemBody"
+      responses:
+        "201":
+          description: Created inventory item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+
+  /inventory/{id}:
+    get:
+      operationId: getInventoryItem
+      tags: [inventory]
+      summary: Get inventory item by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Inventory item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateInventoryItem
+      tags: [inventory]
+      summary: Update inventory item
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInventoryItemBody"
+      responses:
+        "200":
+          description: Updated inventory item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+
+  /inventory/{id}/movement:
+    post:
+      operationId: recordInventoryMovement
+      tags: [inventory]
+      summary: Record stock movement (in/out)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryMovementBody"
+      responses:
+        "200":
+          description: Updated inventory item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+
+  # AGENT SCORES
+  /scores:
+    get:
+      operationId: listScores
+      tags: [scores]
+      summary: List agent scores
+      responses:
+        "200":
+          description: List of agent scores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentScore"
+
+  /scores/{agentId}:
+    get:
+      operationId: getAgentScore
+      tags: [scores]
+      summary: Get score for a specific agent
+      parameters:
+        - in: path
+          name: agentId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Agent score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentScore"
+        "404":
+          description: Not found
+
+  /scores/{agentId}/recalculate:
+    post:
+      operationId: recalculateAgentScore
+      tags: [scores]
+      summary: Recalculate score for an agent
+      parameters:
+        - in: path
+          name: agentId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recalculated score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentScore"
+
+  # NOTIFICATIONS
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications for current user
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/read-all:
+    patch:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: Success
+
+  # DASHBOARD
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard KPI statistics
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/agent-ranking:
+    get:
+      operationId: getAgentRanking
+      tags: [dashboard]
+      summary: Get agent ranking by score
+      responses:
+        "200":
+          description: Agent ranking
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentRankingItem"
+
+  /dashboard/risk-distribution:
+    get:
+      operationId: getRiskDistribution
+      tags: [dashboard]
+      summary: Get risk level distribution of agents
+      responses:
+        "200":
+          description: Risk distribution
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RiskDistributionItem"
+
+  /dashboard/sales-comparison:
+    get:
+      operationId: getSalesComparison
+      tags: [dashboard]
+      summary: Get field sales vs reported sales comparison
+      responses:
+        "200":
+          description: Sales comparison data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SalesComparisonItem"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent activity feed
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +871,786 @@ components:
       required:
         - status
 
+    # AUTH
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+        - user
+
+    # USERS
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        department:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - fullName
+        - email
+        - role
+        - isActive
+        - createdAt
+
+    CreateUserBody:
+      type: object
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+        department:
+          type: ["string", "null"]
+      required:
+        - fullName
+        - email
+        - password
+        - role
+
+    UpdateUserBody:
+      type: object
+      properties:
+        fullName:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        role:
+          type: ["string", "null"]
+        department:
+          type: ["string", "null"]
+        isActive:
+          type: ["boolean", "null"]
+
+    BulkImportUsersBody:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            type: object
+            properties:
+              fullName:
+                type: string
+              email:
+                type: string
+              role:
+                type: string
+              department:
+                type: ["string", "null"]
+            required:
+              - fullName
+              - email
+              - role
+      required:
+        - users
+
+    BulkImportResult:
+      type: object
+      properties:
+        imported:
+          type: integer
+        skipped:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+      required:
+        - imported
+        - skipped
+        - errors
+
+    # AGENTS
+    Agent:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        location:
+          type: string
+        type:
+          type: string
+        contractStart:
+          type: ["string", "null"]
+          format: date-time
+        contractEnd:
+          type: ["string", "null"]
+          format: date-time
+        assignedSalesRepId:
+          type: ["integer", "null"]
+        status:
+          type: string
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - location
+        - type
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateAgentBody:
+      type: object
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        type:
+          type: string
+        contractStart:
+          type: ["string", "null"]
+          format: date-time
+        contractEnd:
+          type: ["string", "null"]
+          format: date-time
+        assignedSalesRepId:
+          type: ["integer", "null"]
+        status:
+          type: string
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+      required:
+        - name
+        - location
+        - type
+        - status
+
+    UpdateAgentBody:
+      type: object
+      properties:
+        name:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        type:
+          type: ["string", "null"]
+        contractStart:
+          type: ["string", "null"]
+          format: date-time
+        contractEnd:
+          type: ["string", "null"]
+          format: date-time
+        assignedSalesRepId:
+          type: ["integer", "null"]
+        status:
+          type: ["string", "null"]
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+
+    BulkImportAgentsBody:
+      type: object
+      properties:
+        agents:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateAgentBody"
+      required:
+        - agents
+
+    # INSPECTION REPORTS
+    InspectionReport:
+      type: object
+      properties:
+        id:
+          type: integer
+        agentId:
+          type: integer
+        inspectorId:
+          type: integer
+        visitDate:
+          type: string
+          format: date-time
+        location:
+          type: ["string", "null"]
+        violations:
+          type: array
+          items:
+            type: string
+        notes:
+          type: ["string", "null"]
+        status:
+          type: string
+        complianceScore:
+          type: ["number", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - agentId
+        - inspectorId
+        - visitDate
+        - status
+        - violations
+        - createdAt
+
+    CreateInspectionBody:
+      type: object
+      properties:
+        agentId:
+          type: integer
+        inspectorId:
+          type: integer
+        visitDate:
+          type: string
+          format: date-time
+        location:
+          type: ["string", "null"]
+        violations:
+          type: array
+          items:
+            type: string
+        notes:
+          type: ["string", "null"]
+        status:
+          type: string
+      required:
+        - agentId
+        - inspectorId
+        - visitDate
+        - status
+
+    UpdateInspectionBody:
+      type: object
+      properties:
+        violations:
+          type: array
+          items:
+            type: string
+        notes:
+          type: ["string", "null"]
+        status:
+          type: ["string", "null"]
+        complianceScore:
+          type: ["number", "null"]
+
+    # SALES LOGS
+    SalesLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        agentId:
+          type: integer
+        inspectorId:
+          type: integer
+        visitId:
+          type: ["integer", "null"]
+        date:
+          type: string
+          format: date-time
+        location:
+          type: ["string", "null"]
+        rechargeCardsQty:
+          type: ["integer", "null"]
+        rechargeCardsValue:
+          type: ["number", "null"]
+        devicesQty:
+          type: ["integer", "null"]
+        simCardsQty:
+          type: ["integer", "null"]
+        ftthCount:
+          type: ["integer", "null"]
+        adslCount:
+          type: ["integer", "null"]
+        observedDailySalesValue:
+          type: number
+        reportedSalesValue:
+          type: number
+        variance:
+          type: number
+        notes:
+          type: ["string", "null"]
+        complianceFlag:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - agentId
+        - inspectorId
+        - date
+        - observedDailySalesValue
+        - reportedSalesValue
+        - variance
+        - complianceFlag
+        - createdAt
+
+    CreateSalesLogBody:
+      type: object
+      properties:
+        agentId:
+          type: integer
+        inspectorId:
+          type: integer
+        visitId:
+          type: ["integer", "null"]
+        date:
+          type: string
+          format: date-time
+        location:
+          type: ["string", "null"]
+        rechargeCardsQty:
+          type: ["integer", "null"]
+        rechargeCardsValue:
+          type: ["number", "null"]
+        devicesQty:
+          type: ["integer", "null"]
+        simCardsQty:
+          type: ["integer", "null"]
+        ftthCount:
+          type: ["integer", "null"]
+        adslCount:
+          type: ["integer", "null"]
+        observedDailySalesValue:
+          type: number
+        reportedSalesValue:
+          type: number
+        notes:
+          type: ["string", "null"]
+      required:
+        - agentId
+        - inspectorId
+        - date
+        - observedDailySalesValue
+        - reportedSalesValue
+
+    UpdateSalesLogBody:
+      type: object
+      properties:
+        notes:
+          type: ["string", "null"]
+        complianceFlag:
+          type: ["string", "null"]
+        observedDailySalesValue:
+          type: ["number", "null"]
+        reportedSalesValue:
+          type: ["number", "null"]
+
+    # TICKETS
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        category:
+          type: string
+        createdById:
+          type: integer
+        assignedToId:
+          type: ["integer", "null"]
+        agentId:
+          type: ["integer", "null"]
+        resolvedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - description
+        - status
+        - priority
+        - category
+        - createdById
+        - createdAt
+        - updatedAt
+
+    CreateTicketBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+        category:
+          type: string
+        createdById:
+          type: integer
+        assignedToId:
+          type: ["integer", "null"]
+        agentId:
+          type: ["integer", "null"]
+      required:
+        - title
+        - description
+        - priority
+        - category
+        - createdById
+
+    UpdateTicketBody:
+      type: object
+      properties:
+        title:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        status:
+          type: ["string", "null"]
+        priority:
+          type: ["string", "null"]
+        assignedToId:
+          type: ["integer", "null"]
+        resolvedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    # INVENTORY
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: integer
+        minQuantity:
+          type: integer
+        unit:
+          type: string
+        serialNumbers:
+          type: array
+          items:
+            type: string
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - category
+        - quantity
+        - minQuantity
+        - unit
+        - serialNumbers
+        - createdAt
+        - updatedAt
+
+    CreateInventoryItemBody:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: integer
+        minQuantity:
+          type: integer
+        unit:
+          type: string
+        notes:
+          type: ["string", "null"]
+      required:
+        - name
+        - category
+        - quantity
+        - minQuantity
+        - unit
+
+    UpdateInventoryItemBody:
+      type: object
+      properties:
+        name:
+          type: ["string", "null"]
+        category:
+          type: ["string", "null"]
+        minQuantity:
+          type: ["integer", "null"]
+        notes:
+          type: ["string", "null"]
+
+    InventoryMovementBody:
+      type: object
+      properties:
+        type:
+          type: string
+        quantity:
+          type: integer
+        reason:
+          type: string
+      required:
+        - type
+        - quantity
+        - reason
+
+    # AGENT SCORES
+    AgentScore:
+      type: object
+      properties:
+        id:
+          type: integer
+        agentId:
+          type: integer
+        agentName:
+          type: string
+        complianceScore:
+          type: number
+        salesAccuracyScore:
+          type: number
+        salesPerformanceScore:
+          type: number
+        activityScore:
+          type: number
+        finalScore:
+          type: number
+        riskLevel:
+          type: string
+        classification:
+          type: string
+        recommendation:
+          type: string
+        lastUpdated:
+          type: string
+          format: date-time
+      required:
+        - id
+        - agentId
+        - agentName
+        - complianceScore
+        - salesAccuracyScore
+        - salesPerformanceScore
+        - activityScore
+        - finalScore
+        - riskLevel
+        - classification
+        - recommendation
+        - lastUpdated
+
+    # NOTIFICATIONS
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: ["integer", "null"]
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        isRead:
+          type: boolean
+        entityType:
+          type: ["string", "null"]
+        entityId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - title
+        - message
+        - isRead
+        - createdAt
+
+    # DASHBOARD
+    DashboardStats:
+      type: object
+      properties:
+        totalAgents:
+          type: integer
+        activeAgents:
+          type: integer
+        suspendedAgents:
+          type: integer
+        pendingAgents:
+          type: integer
+        newAgentsLast30Days:
+          type: integer
+        totalInspections:
+          type: integer
+        inspectionsThisMonth:
+          type: integer
+        openTickets:
+          type: integer
+        lowStockItems:
+          type: integer
+        highRiskAgents:
+          type: integer
+        goldAgents:
+          type: integer
+        totalViolationsThisMonth:
+          type: integer
+        avgAgentScore:
+          type: number
+      required:
+        - totalAgents
+        - activeAgents
+        - suspendedAgents
+        - pendingAgents
+        - newAgentsLast30Days
+        - totalInspections
+        - inspectionsThisMonth
+        - openTickets
+        - lowStockItems
+        - highRiskAgents
+        - goldAgents
+        - totalViolationsThisMonth
+        - avgAgentScore
+
+    AgentRankingItem:
+      type: object
+      properties:
+        agentId:
+          type: integer
+        agentName:
+          type: string
+        finalScore:
+          type: number
+        classification:
+          type: string
+        riskLevel:
+          type: string
+        location:
+          type: string
+      required:
+        - agentId
+        - agentName
+        - finalScore
+        - classification
+        - riskLevel
+        - location
+
+    RiskDistributionItem:
+      type: object
+      properties:
+        riskLevel:
+          type: string
+        count:
+          type: integer
+      required:
+        - riskLevel
+        - count
+
+    SalesComparisonItem:
+      type: object
+      properties:
+        agentId:
+          type: integer
+        agentName:
+          type: string
+        observedTotal:
+          type: number
+        reportedTotal:
+          type: number
+        variance:
+          type: number
+        complianceFlag:
+          type: string
+      required:
+        - agentId
+        - agentName
+        - observedTotal
+        - reportedTotal
+        - variance
+        - complianceFlag
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        entityType:
+          type: ["string", "null"]
+        entityId:
+          type: ["integer", "null"]
+      required:
+        - id
+        - type
+        - title
+        - description
+        - createdAt

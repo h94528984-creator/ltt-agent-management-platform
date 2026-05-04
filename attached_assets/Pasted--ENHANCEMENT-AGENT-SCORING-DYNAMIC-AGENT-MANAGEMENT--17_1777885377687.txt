@@ -1,0 +1,174 @@
+========================
+ENHANCEMENT: AGENT SCORING + DYNAMIC AGENT MANAGEMENT
+========================
+
+Extend the system to fully integrate:
+1) Agent Management
+2) Inspection Sales Log
+3) Agent Evaluation (Scoring Model)
+
+Goal:
+Create a dynamic agent lifecycle system with onboarding, performance tracking, scoring, and decision support.
+
+========================
+1. AGENT MANAGEMENT (KEEP ADDING AGENTS FLEXIBLE)
+========================
+
+Enhance Agent Module:
+
+Features:
+- Add New Agent (Dynamic Form)
+- Required Fields:
+    - Name
+    - Location (Geo-enabled)
+    - Type (Dealer / Sub-agent / Mobile Seller / Center)
+    - Contract Start/End
+    - Assigned Sales Rep
+    - Status (Active / Pending / Suspended / Terminated)
+- Optional:
+    - Documents upload
+    - Photos
+    - GPS pin
+- Bulk Import (Excel/CSV)
+- Quick Add (Fast onboarding mode)
+
+IMPORTANT:
+- System must allow adding agents anytime without dependency on other modules
+- Default score = Neutral (e.g., 70/100)
+
+========================
+2. AGENT SCORING ENGINE
+========================
+
+Create scoring system:
+
+Table: agent_scores
+
+Fields:
+- agent_id
+- compliance_score (from inspections)
+- sales_accuracy_score (from inspection sales log variance)
+- sales_performance_score
+- activity_score (visits frequency)
+- final_score (auto calculated)
+- risk_level (Low / Medium / High)
+- last_updated
+
+Formula example:
+final_score =
+(30% compliance) +
+(25% sales accuracy) +
+(25% sales performance) +
+(20% activity)
+
+========================
+3. LINK WITH INSPECTION SALES LOG
+========================
+
+From Inspection Sales Log:
+- Use variance data to calculate:
+    sales_accuracy_score
+
+Logic:
+- Low variance → high score
+- High variance → penalty
+
+Auto update score after each inspection
+
+========================
+4. LINK WITH INSPECTION REPORTS
+========================
+
+From inspection module:
+- Violations reduce compliance_score
+- Clean visits increase score
+
+========================
+5. AUTOMATED AGENT CLASSIFICATION
+========================
+
+Based on final_score:
+
+- 85–100 → Gold Agent
+- 70–84 → Silver Agent
+- 50–69 → Watchlist
+- <50 → High Risk
+
+========================
+6. DECISION ENGINE (CRITICAL)
+========================
+
+Auto recommendations:
+
+If:
+- High risk → Suggest:
+    - Warning
+    - Re-training
+    - Suspension
+
+If:
+- Gold → Suggest:
+    - Incentives
+    - Expansion
+    - Priority stock
+
+========================
+7. DASHBOARD ADDITIONS
+========================
+
+Add:
+
+- Agent Ranking Table
+- Risk Distribution Chart
+- Top Performing Agents
+- Agents Needing Action
+- New Agents (Last 30 days)
+
+========================
+8. WORKFLOW AUTOMATION
+========================
+
+Flow:
+
+Inspection Visit →
+Sales Log Recorded →
+Variance Calculated →
+Score Updated →
+Agent Classification Updated →
+Decision Recommendation Generated
+
+========================
+9. NOTIFICATIONS
+========================
+
+Trigger alerts:
+
+- New agent added
+- Agent moved to high risk
+- Top agent achievement
+- Repeated violations
+
+========================
+10. REPORTING
+========================
+
+- Agent Scorecard (PDF/Excel)
+- Performance history
+- Comparison between agents
+
+========================
+11. DATA INTEGRITY
+========================
+
+- All score updates must be logged
+- Keep historical score tracking
+- No manual override without admin approval
+
+========================
+
+Goal:
+Build a smart agent ecosystem that is:
+- Flexible (easy onboarding)
+- Data-driven (inspection + sales)
+- Controlled (governance + scoring)
+- Scalable (future AI + automation ready)
