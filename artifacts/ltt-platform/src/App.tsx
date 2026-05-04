@@ -25,7 +25,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const PUBLIC_PATHS = ["/agent-request"];
+const PUBLIC_PATHS = ["/agent-request", "/form"];
 
 function Router() {
   const [location] = useLocation();
@@ -35,6 +35,8 @@ function Router() {
     return (
       <Switch>
         <Route path="/agent-request" component={AgentRequestForm} />
+        <Route path="/form" component={AgentRequestForm} />
+        <Route path="/form/" component={AgentRequestForm} />
       </Switch>
     );
   }
