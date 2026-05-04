@@ -1,0 +1,132 @@
+========================
+FEATURE: EXPORT & MULTI-CHANNEL SHARING
+========================
+
+Enhance the "Agent Creation Request Form" to support:
+- Export as PDF
+- Export as Excel
+- Send via Email
+- Share via WhatsApp
+
+========================
+1. EXPORT OPTIONS UI
+========================
+
+After form submission OR before submission:
+
+Add buttons:
+
+- [تصدير PDF]
+- [تصدير Excel]
+- [إرسال بالبريد]
+- [إرسال عبر واتساب]
+
+========================
+2. PDF EXPORT
+========================
+
+Use library:
+- pdfkit OR puppeteer
+
+Format:
+- Clean professional layout
+- Include:
+    - Company name (LTT)
+    - Form data
+    - Score
+    - Date
+    - Submitted by
+
+File name:
+agent_request_<date>.pdf
+
+========================
+3. EXCEL EXPORT
+========================
+
+Use:
+- exceljs
+
+Columns:
+- اسم الموظف
+- اسم الوكيل
+- المدينة
+- النوع
+- التقييم
+- الملاحظات
+- التاريخ
+
+Allow:
+- Download file
+- OR append to master sheet
+
+========================
+4. EMAIL SENDING
+========================
+
+Use:
+- Nodemailer
+
+Recipients:
+- y.rahuma@ltt.ly
+- s.zawia@ltt.ly
+
+Subject:
+طلب إنشاء وكيل جديد
+
+Content:
+- All form details
+- Score
+- Attach PDF
+
+========================
+5. WHATSAPP INTEGRATION (IMPORTANT)
+========================
+
+Use WhatsApp Click-to-Chat:
+
+Number:
+00218912444808
+
+Generate message dynamically:
+
+Example:
+"طلب إنشاء وكيل جديد:
+اسم الوكيل: XXX
+المدينة: XXX
+التقييم: XX/100"
+
+Create button:
+- Opens WhatsApp with pre-filled message
+
+URL format:
+https://wa.me/218912444808?text=<encoded_message>
+
+========================
+6. DATA FLOW
+========================
+
+On Submit:
+- Save to database
+- Generate PDF
+- Allow all export options
+
+========================
+7. SECURITY & VALIDATION
+========================
+
+- Validate required fields
+- Prevent empty submissions
+
+========================
+8. OPTIONAL (ADVANCED)
+========================
+
+- Auto-send email after submit
+- Auto-open WhatsApp suggestion
+- Save all exports history
+
+========================
+
+Goal:
+Turn the form into a powerful operational tool that supports reporting, sharing, and fast decision-making across multiple channels.

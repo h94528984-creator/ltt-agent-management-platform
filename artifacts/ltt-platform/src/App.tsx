@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/auth-context";
@@ -14,6 +14,7 @@ import { Tickets } from "@/pages/tickets";
 import { Inventory } from "@/pages/inventory";
 import { Scores } from "@/pages/scores";
 import { Users } from "@/pages/users";
+import AgentRequestForm from "@/pages/agent-request-form";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,7 +25,20 @@ const queryClient = new QueryClient({
   },
 });
 
+const PUBLIC_PATHS = ["/agent-request"];
+
 function Router() {
+  const [location] = useLocation();
+  const isPublic = PUBLIC_PATHS.some(p => location === p || location.startsWith(p + "/"));
+
+  if (isPublic) {
+    return (
+      <Switch>
+        <Route path="/agent-request" component={AgentRequestForm} />
+      </Switch>
+    );
+  }
+
   return (
     <Layout>
       <Switch>

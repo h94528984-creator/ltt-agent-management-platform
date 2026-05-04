@@ -1,0 +1,129 @@
+========================
+FEATURE: FILE ATTACHMENTS + LOCATION (GPS + MAP)
+========================
+
+Enhance the "Agent Creation Request Form" with:
+
+1) File Upload (images + documents)
+2) GPS location capture
+3) Map picker (manual location selection)
+
+========================
+1. FILE UPLOAD
+========================
+
+Allow user to upload:
+
+- Images (jpg, png)
+- Documents (pdf)
+
+Fields:
+- صور الموقع (multiple images)
+- مرفقات إضافية
+
+Technical:
+- Use multer (Node.js)
+- Store files:
+    - local storage OR cloud (recommended: AWS S3 / Cloudinary)
+
+Limit:
+- Max 5 images
+- Max size: 5MB each
+
+Preview:
+- Show thumbnails before submit
+- Allow delete before upload
+
+========================
+2. GEOLOCATION (AUTO)
+========================
+
+Add button:
+[📍 تحديد الموقع تلقائيًا]
+
+Use browser API:
+- navigator.geolocation
+
+Capture:
+- latitude
+- longitude
+
+Display:
+- Show coordinates
+- Show accuracy
+
+========================
+3. MAP PICKER (MANUAL)
+========================
+
+Integrate map:
+
+Option A:
+- Leaflet.js (free, recommended)
+
+Option B:
+- Google Maps API
+
+Features:
+- Click on map to select location
+- Drag marker
+- Auto-fill coordinates
+
+========================
+4. STORE LOCATION DATA
+========================
+
+In database:
+
+Fields:
+- latitude
+- longitude
+- location_description (optional)
+
+========================
+5. INCLUDE IN EXPORT
+========================
+
+In PDF:
+- Show coordinates
+- Include map snapshot (optional)
+
+In Email:
+- Add Google Maps link:
+https://maps.google.com/?q=lat,long
+
+========================
+6. WHATSAPP MESSAGE UPDATE
+========================
+
+Add to message:
+
+"الموقع:
+https://maps.google.com/?q=lat,long"
+
+========================
+7. UI IMPROVEMENTS
+========================
+
+- Section title: "📍 الموقع والمرفقات"
+- Drag & drop upload
+- Map embedded below upload
+
+========================
+8. VALIDATION
+========================
+
+- Location optional but recommended
+- At least 1 image required (optional setting)
+
+========================
+9. ADVANCED (OPTIONAL)
+========================
+
+- Compress images before upload
+- AI check (future): verify storefront quality
+
+========================
+
+Goal:
+Capture real, verifiable field data (location + visuals) to improve decision quality and reduce risk in agent approval.

@@ -10,6 +10,7 @@ import inventoryRouter from "./inventory";
 import scoresRouter from "./scores";
 import notificationsRouter from "./notifications";
 import dashboardRouter from "./dashboard";
+import agentRequestsRouter from "./agentRequests";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(inventoryRouter);
 router.use(scoresRouter);
 router.use(notificationsRouter);
 router.use(dashboardRouter);
+router.use(agentRequestsRouter);
 
 export default router;
