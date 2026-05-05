@@ -15,6 +15,7 @@ import { Inventory } from "@/pages/inventory";
 import { Scores } from "@/pages/scores";
 import { Users } from "@/pages/users";
 import AgentRequestForm from "@/pages/agent-request-form";
+import { AgentRequests } from "@/pages/agent-requests";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,6 +48,7 @@ function Router() {
         <Route path="/login" component={Login} />
         <Route path="/" component={Dashboard} />
         <Route path="/agents" component={Agents} />
+        <Route path="/agent-requests" component={AgentRequests} />
         <Route path="/inspections" component={Inspections} />
         <Route path="/sales-logs" component={SalesLogs} />
         <Route path="/tickets" component={Tickets} />

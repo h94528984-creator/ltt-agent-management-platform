@@ -18,6 +18,7 @@ import {
   Settings,
   LogOut,
   Wifi,
+  ClipboardList,
 } from "lucide-react";
 
 const roleLabels: Record<string, string> = {
@@ -35,6 +36,7 @@ const roleLabels: Record<string, string> = {
 const navItems = [
   { href: "/", label: "لوحة القيادة", icon: LayoutDashboard },
   { href: "/agents", label: "إدارة الوكلاء", icon: Users },
+  { href: "/agent-requests", label: "طلبات التسجيل", icon: ClipboardList },
   { href: "/inspections", label: "تقارير التفتيش", icon: CheckSquare },
   { href: "/sales-logs", label: "سجلات المبيعات", icon: FileText },
   { href: "/tickets", label: "نظام التذاكر", icon: TicketIcon },

@@ -268,6 +268,64 @@ router.post("/agent-request", uploadFields, async (req, res): Promise<void> => {
   }
 });
 
+// GET /api/agent-requests — authenticated, list all
+router.get("/agent-requests", async (req, res): Promise<void> => {
+  try {
+    const { status, search, limit: limitQ, offset: offsetQ } = req.query as Record<string, string>;
+    const { desc, asc, ilike, or } = await import("drizzle-orm");
+
+    let query = db.select().from(agentRequestsTable).$dynamic();
+
+    if (status && status !== "all") {
+      query = query.where(eq(agentRequestsTable.status, status));
+    }
+
+    if (search) {
+      query = query.where(
+        or(
+          ilike(agentRequestsTable.agentName, `%${search}%`),
+          ilike(agentRequestsTable.representativeName, `%${search}%`),
+          ilike(agentRequestsTable.city, `%${search}%`),
+          ilike(agentRequestsTable.mobile, `%${search}%`),
+          ilike(agentRequestsTable.requestId, `%${search}%`),
+        )
+      );
+    }
+
+    const lim = Math.min(parseInt(limitQ ?? "50") || 50, 200);
+    const off = parseInt(offsetQ ?? "0") || 0;
+    const rows = await query.orderBy(desc(agentRequestsTable.createdAt)).limit(lim).offset(off);
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "Failed to list agent requests");
+    res.status(500).json({ error: "حدث خطأ" });
+  }
+});
+
+// PATCH /api/agent-request/:id/status — authenticated
+router.patch("/agent-request/:id/status", async (req, res): Promise<void> => {
+  try {
+    const id = parseInt(req.params["id"] ?? "");
+    if (isNaN(id)) { res.status(400).json({ error: "معرف غير صالح" }); return; }
+    const { status } = req.body as { status: string };
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      res.status(400).json({ error: "الحالة غير صالحة" });
+      return;
+    }
+    const { sql } = await import("drizzle-orm");
+    const [updated] = await db
+      .update(agentRequestsTable)
+      .set({ status, updatedAt: sql`NOW()` })
+      .where(eq(agentRequestsTable.id, id))
+      .returning();
+    if (!updated) { res.status(404).json({ error: "الطلب غير موجود" }); return; }
+    res.json(updated);
+  } catch (err) {
+    req.log.error({ err }, "Failed to update agent request status");
+    res.status(500).json({ error: "حدث خطأ" });
+  }
+});
+
 // GET /api/agent-request/:requestId — public
 router.get("/agent-request/:requestId", async (req, res): Promise<void> => {
   const { requestId } = req.params;
