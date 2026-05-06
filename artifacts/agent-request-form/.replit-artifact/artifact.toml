@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/form/"
-title = "التفتيش على الوكلاء"
+title = "منصة متابعة عمليات المراكز والوكلاء"
 version = "1.0.0"
 id = "artifacts/agent-request-form"
 router = "path"

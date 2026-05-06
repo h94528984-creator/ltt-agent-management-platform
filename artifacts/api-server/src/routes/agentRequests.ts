@@ -268,29 +268,87 @@ router.post("/agent-request", uploadFields, async (req, res): Promise<void> => {
   }
 });
 
+// POST /api/agent-requests — JSON body, supports company entity types
+// (service_center / fixed_pos / mobile_van / agent / inspection)
+router.post("/agent-requests", async (req, res): Promise<void> => {
+  try {
+    const b = req.body as Record<string, unknown>;
+    const entityType = String(b["entityType"] ?? "agent");
+    const allowedTypes = ["agent", "service_center", "fixed_pos", "mobile_van", "inspection"];
+    if (!allowedTypes.includes(entityType)) {
+      res.status(400).json({ error: "نوع الكيان غير صالح" }); return;
+    }
+
+    // Support both schemas: company entity (entityName/responsibleEmployee/employeePhone/address)
+    // and agent (agentName/representativeName/mobile/fullAddress).
+    const agentName = String(b["entityName"] ?? b["agentName"] ?? "").trim();
+    const representativeName = String(b["responsibleEmployee"] ?? b["representativeName"] ?? "").trim();
+    const mobile = String(b["employeePhone"] ?? b["mobile"] ?? "").trim();
+    const city = String(b["city"] ?? "").trim();
+    const fullAddress = b["address"] ?? b["fullAddress"] ?? null;
+
+    if (!agentName || !representativeName || !mobile || !city) {
+      res.status(400).json({ error: "حقول مطلوبة ناقصة (الاسم/المسؤول/الهاتف/المدينة)" });
+      return;
+    }
+
+    const services = Array.isArray(b["services"]) ? (b["services"] as string[]) : [];
+    const lat = b["latitude"] != null ? Number(b["latitude"]) : null;
+    const lng = b["longitude"] != null ? Number(b["longitude"]) : null;
+    const staffCount = b["staffCount"] != null ? Number(b["staffCount"]) : null;
+    const staffReadiness = b["staffReadiness"] != null ? Number(b["staffReadiness"]) : 3;
+
+    const requestId = generateRequestId();
+    const [saved] = await db.insert(agentRequestsTable).values({
+      requestId,
+      entityType,
+      representativeName,
+      representativeEmail: String(b["representativeEmail"] ?? `${representativeName.replace(/\s/g, ".")}@ltt.ly`),
+      agentName,
+      mobile,
+      city,
+      fullAddress: fullAddress ? String(fullAddress) : undefined,
+      activityType: b["activityType"] ? String(b["activityType"]) : null,
+      latitude: lat ?? undefined,
+      longitude: lng ?? undefined,
+      hasSignboard: b["hasSignboard"] === true || b["hasSignboard"] === "true",
+      hasDevices: b["hasDevices"] === true || b["hasDevices"] === "true",
+      internetQuality: String(b["internetQuality"] ?? "medium"),
+      staffReadiness,
+      staffCount: staffCount ?? undefined,
+      areaTraffic: String(b["areaTraffic"] ?? "medium"),
+      services,
+      notes: b["notes"] ? String(b["notes"]) : undefined,
+    }).returning();
+    res.status(201).json(saved);
+  } catch (err) {
+    req.log.error({ err }, "Failed to create agent-request (json)");
+    res.status(500).json({ error: "حدث خطأ، يرجى المحاولة مجددًا" });
+  }
+});
+
 // GET /api/agent-requests — authenticated, list all
 router.get("/agent-requests", async (req, res): Promise<void> => {
   try {
-    const { status, search, limit: limitQ, offset: offsetQ } = req.query as Record<string, string>;
-    const { desc, asc, ilike, or } = await import("drizzle-orm");
+    const { status, entityType, search, limit: limitQ, offset: offsetQ } = req.query as Record<string, string>;
+    const { desc, ilike, or, and } = await import("drizzle-orm");
 
     let query = db.select().from(agentRequestsTable).$dynamic();
-
-    if (status && status !== "all") {
-      query = query.where(eq(agentRequestsTable.status, status));
-    }
-
+    const conds = [];
+    if (status && status !== "all") conds.push(eq(agentRequestsTable.status, status));
+    if (entityType && entityType !== "all") conds.push(eq(agentRequestsTable.entityType, entityType));
     if (search) {
-      query = query.where(
+      conds.push(
         or(
           ilike(agentRequestsTable.agentName, `%${search}%`),
           ilike(agentRequestsTable.representativeName, `%${search}%`),
           ilike(agentRequestsTable.city, `%${search}%`),
           ilike(agentRequestsTable.mobile, `%${search}%`),
           ilike(agentRequestsTable.requestId, `%${search}%`),
-        )
+        )!
       );
     }
+    if (conds.length > 0) query = query.where(and(...conds));
 
     const lim = Math.min(parseInt(limitQ ?? "50") || 50, 200);
     const off = parseInt(offsetQ ?? "0") || 0;
@@ -308,7 +366,7 @@ router.patch("/agent-request/:id/status", async (req, res): Promise<void> => {
     const id = parseInt(req.params["id"] ?? "");
     if (isNaN(id)) { res.status(400).json({ error: "معرف غير صالح" }); return; }
     const { status } = req.body as { status: string };
-    if (!["pending", "approved", "rejected"].includes(status)) {
+    if (!["pending", "approved", "rejected", "cancelled"].includes(status)) {
       res.status(400).json({ error: "الحالة غير صالحة" });
       return;
     }

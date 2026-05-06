@@ -11,18 +11,23 @@ export const agentRequestsTable = pgTable("agent_requests", {
   // ON DELETE SET NULL: deleting a dealer preserves historical inspection records
   agentId: integer("agent_id").references(() => agentsTable.id, { onDelete: "set null" }),
 
+  // Entity type: agent | service_center | fixed_pos | mobile_van | inspection
+  entityType: text("entity_type").notNull().default("agent"),
+
   // LTT Representative (employee filling the form)
   representativeName: text("representative_name").notNull(),
   representativeEmail: text("representative_email").notNull(),
 
-  // Agent / Shop Info
+  // Agent / Shop / Entity Info
   agentName: text("agent_name").notNull(),
   mobile: text("mobile").notNull(),
   landline: text("landline"),
   agentEmail: text("agent_email"),
   city: text("city").notNull(),
   fullAddress: text("full_address"),
-  activityType: text("activity_type").notNull(),
+  activityType: text("activity_type"),
+  staffCount: integer("staff_count"),
+  services: jsonb("services").$type<string[]>().notNull().default([]),
   latitude: doublePrecision("latitude"),
   longitude: doublePrecision("longitude"),
   locationDescription: text("location_description"),

@@ -104,6 +104,12 @@ pnpm --filter @workspace/db run push            # Push DB schema to PostgreSQL
 
 ## Recent Changes
 
+- **Multi-entity agent_requests**: added `entityType` (agent/service_center/fixed_pos/mobile_van/inspection), `services` (jsonb), `staffCount`; `activityType` now nullable
+- New JSON `POST /api/agent-requests` route accepts company-entity payloads (entityName/responsibleEmployee/employeePhone/address) — original multipart `POST /api/agent-request` for agent inspections kept
+- `PATCH /api/agent-request/:id/status` now accepts `cancelled`; GET supports `?entityType=` filter
+- ltt-platform Inspections page: entity-type filter + colored badge column + "إلغاء العملية" button in detail modal
+- ltt-platform Tickets page: "إنشاء تذكرة جديدة" button + modal POSTing to `/api/tickets`
+- Form (agent-request-form): FixedPosSelector + fixedPosList added (مطار معيتيقة)
 - `agent_documents` + `document_history` tables added; schema pushed to DB
 - `agents` table extended: `channelType`, `region`, `services` (jsonb), `supervisorId`, `marketPotential`, `operationalEval`
 - Documents page: full CRUD with file upload, expiry status auto-computed, history log

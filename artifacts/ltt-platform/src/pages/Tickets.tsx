@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { Search, ChevronDown, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
+import { Search, ChevronDown, AlertCircle, Clock, CheckCircle2, Plus, X } from "lucide-react";
 
 interface Ticket {
   id: number;
@@ -42,11 +42,91 @@ const CATEGORY_LABELS: Record<string, string> = {
   other: "أخرى",
 };
 
+function CreateTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated: (t: Ticket) => void }) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("technical");
+  const [priority, setPriority] = useState("medium");
+  const [agentId, setAgentId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim() || !description.trim()) { setError("العنوان والوصف مطلوبان"); return; }
+    setSaving(true); setError(null);
+    try {
+      const userRaw = localStorage.getItem("ltt_user");
+      const createdById = userRaw ? (JSON.parse(userRaw).id as number) : 1;
+      const body: Record<string, unknown> = {
+        title: title.trim(),
+        description: description.trim(),
+        category, priority, createdById,
+      };
+      if (agentId.trim()) body.agentId = parseInt(agentId.trim());
+      const created = await api.post<Ticket>("/tickets", body);
+      onCreated(created);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "حدث خطأ");
+    } finally { setSaving(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <form
+        className="bg-white rounded-2xl max-w-lg w-full shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={submit}
+      >
+        <div className="border-b border-border px-6 py-4 flex items-center justify-between">
+          <h2 className="font-bold text-foreground">إنشاء تذكرة عمل جديدة</h2>
+          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">العنوان *</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="مثال: مشكلة في جهاز POS" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">الوصف *</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">الفئة</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white">
+                {Object.entries(CATEGORY_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">الأولوية</label>
+              <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white">
+                {Object.entries(PRIORITY_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">معرّف الوكيل (اختياري)</label>
+            <input value={agentId} onChange={(e) => setAgentId(e.target.value)} type="number" className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="رقم الوكيل" />
+          </div>
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+        </div>
+        <div className="border-t border-border px-6 py-3 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-muted">إلغاء</button>
+          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50">{saving ? "جاري الحفظ..." : "إنشاء التذكرة"}</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export default function Tickets() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => {
     api.get<Ticket[]>("/tickets")
@@ -71,9 +151,18 @@ export default function Tickets() {
 
   return (
     <div className="p-6 space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">نظام التذاكر</h1>
-        <p className="text-muted-foreground text-sm mt-1">إدارة وتتبع مشكلات الوكلاء والبلاغات</p>
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">نظام التذاكر</h1>
+          <p className="text-muted-foreground text-sm mt-1">إدارة وتتبع مشكلات الوكلاء والبلاغات</p>
+        </div>
+        <button
+          onClick={() => setShowCreate(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors"
+        >
+          <Plus size={16} />
+          إنشاء تذكرة جديدة
+        </button>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
@@ -160,6 +249,13 @@ export default function Tickets() {
           </tbody>
         </table>
       </div>
+
+      {showCreate && (
+        <CreateTicketModal
+          onClose={() => setShowCreate(false)}
+          onCreated={(t) => setTickets((prev) => [t, ...prev])}
+        />
+      )}
     </div>
   );
 }

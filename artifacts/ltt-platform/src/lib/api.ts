@@ -33,6 +33,9 @@ export interface AgentRequest {
   id: number;
   requestId: string;
   agentId: number | null;
+  entityType: string;
+  services: string[] | null;
+  staffCount: number | null;
   representativeName: string;
   representativeEmail: string | null;
   agentName: string;

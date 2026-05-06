@@ -9,13 +9,37 @@ const STATUS_OPTIONS = [
   { value: "pending", label: "قيد المراجعة" },
   { value: "approved", label: "مقبول" },
   { value: "rejected", label: "مرفوض" },
+  { value: "cancelled", label: "ملغاة" },
 ];
+
+const ENTITY_OPTIONS = [
+  { value: "", label: "كل الأنواع" },
+  { value: "agent", label: "وكيل" },
+  { value: "service_center", label: "مركز خدمة" },
+  { value: "fixed_pos", label: "نقطة بيع ثابتة" },
+  { value: "mobile_van", label: "سيارة بيع متنقلة" },
+  { value: "inspection", label: "تفتيش" },
+];
+
+const ENTITY_BADGE: Record<string, { label: string; cls: string }> = {
+  agent:           { label: "وكيل",          cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  service_center:  { label: "مركز خدمة",     cls: "bg-blue-50 text-blue-700 border-blue-200" },
+  fixed_pos:       { label: "نقطة بيع ثابتة", cls: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+  mobile_van:      { label: "سيارة بيع",     cls: "bg-purple-50 text-purple-700 border-purple-200" },
+  inspection:      { label: "تفتيش",         cls: "bg-amber-50 text-amber-700 border-amber-200" },
+};
+
+function EntityBadge({ type }: { type: string | null | undefined }) {
+  const e = ENTITY_BADGE[type ?? "agent"] ?? ENTITY_BADGE["agent"]!;
+  return <span className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-medium border ${e.cls}`}>{e.label}</span>;
+}
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string; icon: React.ComponentType<{ size?: number }> }> = {
     pending: { label: "قيد المراجعة", cls: "bg-yellow-100 text-yellow-700 border-yellow-200", icon: Clock },
     approved: { label: "مقبول", cls: "bg-green-100 text-green-700 border-green-200", icon: CheckCircle },
     rejected: { label: "مرفوض", cls: "bg-red-100 text-red-700 border-red-200", icon: XCircle },
+    cancelled: { label: "ملغاة", cls: "bg-gray-100 text-gray-600 border-gray-200", icon: XCircle },
   };
   const s = map[status] ?? { label: status, cls: "bg-gray-100 text-gray-700 border-gray-200", icon: Clock };
   const Icon = s.icon;
@@ -129,6 +153,15 @@ function DetailModal({ record, onClose, onStatusChange }: { record: AgentRequest
             >
               إعادة للمراجعة
             </button>
+            <button
+              disabled={updatingStatus || record.status === "cancelled"}
+              onClick={() => {
+                if (confirm("هل أنت متأكد من إلغاء هذه العملية؟")) updateStatus("cancelled");
+              }}
+              className="px-4 py-1.5 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 disabled:opacity-50 transition-colors mr-auto"
+            >
+              إلغاء العملية
+            </button>
           </div>
         </div>
       </div>
@@ -163,6 +196,7 @@ export default function Inspections() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [entityFilter, setEntityFilter] = useState("");
   const [selected, setSelected] = useState<AgentRequest | null>(null);
   const [page, setPage] = useState(0);
   const PER_PAGE = 20;
@@ -186,7 +220,8 @@ export default function Inspections() {
     const q = search.toLowerCase();
     const matchSearch = !q || r.agentName.toLowerCase().includes(q) || r.city.toLowerCase().includes(q) || r.representativeName.toLowerCase().includes(q) || r.requestId.toLowerCase().includes(q);
     const matchStatus = !statusFilter || r.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchEntity = !entityFilter || (r.entityType ?? "agent") === entityFilter;
+    return matchSearch && matchStatus && matchEntity;
   });
 
   const paged = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
@@ -279,6 +314,16 @@ export default function Inspections() {
           </select>
           <ChevronDown size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         </div>
+        <div className="relative">
+          <select
+            value={entityFilter}
+            onChange={(e) => { setEntityFilter(e.target.value); setPage(0); }}
+            className="appearance-none border border-border rounded-lg pr-4 pl-8 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
+          >
+            {ENTITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <ChevronDown size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
@@ -286,7 +331,8 @@ export default function Inspections() {
           <thead className="bg-muted/50 border-b border-border">
             <tr>
               <th className="px-4 py-3 text-right font-semibold text-muted-foreground">رقم الطلب</th>
-              <th className="px-4 py-3 text-right font-semibold text-muted-foreground">الوكيل</th>
+              <th className="px-4 py-3 text-right font-semibold text-muted-foreground">النوع</th>
+              <th className="px-4 py-3 text-right font-semibold text-muted-foreground">الاسم</th>
               <th className="px-4 py-3 text-right font-semibold text-muted-foreground">المدينة</th>
               <th className="px-4 py-3 text-right font-semibold text-muted-foreground">المفتش</th>
               <th className="px-4 py-3 text-right font-semibold text-muted-foreground">التقييم</th>
@@ -298,18 +344,19 @@ export default function Inspections() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
                   <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                   جاري التحميل...
                 </td>
               </tr>
             ) : paged.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">لا توجد نتائج</td>
+                <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">لا توجد نتائج</td>
               </tr>
             ) : paged.map((r) => (
               <tr key={r.id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{r.requestId.slice(0, 8)}…</td>
+                <td className="px-4 py-3"><EntityBadge type={r.entityType} /></td>
                 <td className="px-4 py-3 font-medium text-foreground">{r.agentName}</td>
                 <td className="px-4 py-3 text-muted-foreground">{r.city}</td>
                 <td className="px-4 py-3 text-muted-foreground">{r.representativeName}</td>
