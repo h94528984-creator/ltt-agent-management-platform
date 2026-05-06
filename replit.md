@@ -79,20 +79,46 @@ pnpm --filter @workspace/db run push            # Push DB schema to PostgreSQL
 
 ## DB Schema Tables
 
-`users`, `agents`, `inspections`, `sales_logs`, `tickets`, `inventory`, `agent_scores`, `notifications`, `agent_requests`
+`users`, `agents`, `inspections`, `sales_logs`, `tickets`, `inventory`, `agent_scores`, `notifications`, `agent_requests`, `agent_documents`, `document_history`
+
+## Platform Modules (updated)
+
+### Management Platform (`/`)
+1. **Login** — Email + password (default: `LTT@2024`)
+2. **Dashboard** — KPI cards + document alert banner (expired/expiring counts), risk pie, ranking bar
+3. **Inspections** — Field inspection reports, status workflow, CSV export
+4. **Agents** — Agent cards with score/class/doc-status badges (red=expired, amber=expiring, green=valid), CRUD, CSV export
+5. **Documents** — Full license/doc management: CRUD, expiry tracking, file upload, history log, CSV export
+6. **Analytics**, **Tickets**, **Inventory**, **Users**
+
+### Field Inspection Form (`/form/`)
+- Mode selector: تفتيش على وكيل قائم / إنشاء وكيل جديد
+- New agent flow: class A–E, channel type, GPS, readiness, doc uploads (DocUploadRow component — no hook violations)
+- 190 agents from CSV, photo uploads, scoring sections
 
 ## Seeded Data
 
 - **19 users** (real LTT team members) with default password `LTT@2024`
-- **190 real dealers** across the Western Region — imported from `artifacts/agent-request-form/src/data/agentsList.ts` via `pnpm --filter @workspace/scripts run seed-dealers`
-- **10 inventory items** (SIM cards, recharge cards, devices, FTTH equipment)
-- **7 tickets** covering technical, compliance, billing, and stock issues
-- **Agent scores** with Gold/Silver/Watchlist/High_Risk classifications (only for dealers that have been scored)
+- **190 real dealers** across the Western Region
+- **10 inventory items**, **7 tickets**, agent scores
 
 ## Recent Changes
 
-- Unified dealer database: `agents` table now has `city`, `address`, `phone`, `email` columns
-- `agent_requests` table has new `agent_id` column linking inspection reports to dealer records
-- Agents page: full CRUD (Add/Edit/Delete), city/status/type filters, CSV export, inspection history per dealer
-- Inspections page: CSV export of filtered results
-- Seed script `scripts/src/seedDealers.ts` is excluded from typecheck (one-off; runs via tsx)
+- `agent_documents` + `document_history` tables added; schema pushed to DB
+- `agents` table extended: `channelType`, `region`, `services` (jsonb), `supervisorId`, `marketPotential`, `operationalEval`
+- Documents page: full CRUD with file upload, expiry status auto-computed, history log
+- Dashboard: document alert banner (red/amber) + document KPI cards
+- Agents page: fetches `/documents/agent-status`, shows per-card doc status badges
+- Field form: `DocUploadRow` component fixes hook-in-map violation; `PhotoUploadSection` is a proper component
+- Sidebar: "التراخيص والمستندات" nav entry at `/documents`
+- `lib/ltt-platform/src/lib/documentStatus.ts`: shared label/color/utils for doc status
+
+## Gotchas
+
+- **React hooks in map**: Never call `useRef`/`useState` inside `.map()` — extract to a named component
+- **CSS @import**: Google Fonts must be in `index.html` `<link>` — NOT `@import url()` in CSS
+- **tw-animate-css**: Do NOT `@import "tw-animate-css"` in Tailwind v4 CSS
+- **Vite base path**: `base: basePath` (not `isDev ? "/" : basePath`)
+- **Auth tokens**: `ltt_token` / `ltt_user` in localStorage; default password `LTT@2024`
+- **Agent requests list route**: `GET /api/agent-requests`, status update: `PATCH /api/agent-request/:id/status`
+- **Tickets**: Uses `createdById` FK column
