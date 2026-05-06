@@ -22,6 +22,9 @@ const CLASS_OPTIONS = [
 const ACTIVITY_TYPES = [
   { value: "agent_main", label: "وكيل - الفئة (أ)" },
   { value: "agent_sub", label: "وكيل - الفئة (ب)" },
+  { value: "agent_c", label: "وكيل - الفئة (ج)" },
+  { value: "agent_d", label: "وكيل - الفئة (د)" },
+  { value: "agent_e", label: "وكيل - الفئة (هـ)" },
   { value: "service_center", label: "مركز خدمات" },
   { value: "fixed_pos", label: "نقطة بيع ثابتة" },
   { value: "mobile_van", label: "سيارة بيع وخدمات متنقلة" },
