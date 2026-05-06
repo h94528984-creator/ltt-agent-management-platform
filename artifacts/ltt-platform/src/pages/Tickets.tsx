@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { AgentRequest } from "@/lib/api";
 import { Search, ChevronDown, AlertCircle, Clock, CheckCircle2, Plus, X, MapPin, Navigation, Inbox } from "lucide-react";
+import { MapPickerModal } from "@/components/MapPicker";
 
 const TICKET_TITLE_PRESETS = [
   { value: "تفتيش على وكيل قائم",        icon: "🔍", category: "compliance",  entityType: "agent",          manual: false },
@@ -77,6 +78,7 @@ function CreateTicketModal({ users, entities, agents, onClose, onCreated }: { us
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -205,19 +207,38 @@ function CreateTicketModal({ users, entities, agents, onClose, onCreated }: { us
           </div>
 
           <div className="border-t border-border pt-4">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
               <label className="block text-sm font-medium">الموقع الجغرافي (اختياري)</label>
-              <button type="button" onClick={captureGps} disabled={gpsLoading} className="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50">
-                <Navigation size={12} />
-                {gpsLoading ? "جاري التحديد..." : "استخدم موقعي الحالي"}
-              </button>
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={() => setShowMap(true)} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                  <MapPin size={12} />
+                  حدد على الخريطة
+                </button>
+                <button type="button" onClick={captureGps} disabled={gpsLoading} className="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50">
+                  <Navigation size={12} />
+                  {gpsLoading ? "جاري التحديد..." : "استخدم موقعي الحالي"}
+                </button>
+              </div>
             </div>
             <input value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="اسم الموقع — مثل: مركز جنزور" className="w-full border border-border rounded-lg px-3 py-2 text-sm mb-2" />
             <div className="grid grid-cols-2 gap-2">
               <input value={latitude} onChange={(e) => setLatitude(e.target.value)} type="number" step="any" placeholder="خط العرض" className="border border-border rounded-lg px-3 py-2 text-sm" />
               <input value={longitude} onChange={(e) => setLongitude(e.target.value)} type="number" step="any" placeholder="خط الطول" className="border border-border rounded-lg px-3 py-2 text-sm" />
             </div>
+            {latitude && longitude && (
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`} target="_blank" rel="noopener noreferrer"
+                 className="inline-flex items-center gap-1 mt-2 text-xs text-blue-600 hover:underline">
+                <MapPin size={11} /> عرض الموقع المحدد على Google Maps
+              </a>
+            )}
           </div>
+
+          {showMap && (
+            <MapPickerModal initialLat={latitude} initialLng={longitude}
+              onClose={() => setShowMap(false)}
+              onPick={(la, ln) => { setLatitude(la); setLongitude(ln); }}
+            />
+          )}
 
           {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
         </div>
