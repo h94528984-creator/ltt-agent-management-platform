@@ -419,10 +419,23 @@ function MapPanel({ lat, lng, agentLat, agentLng, onChange }: {
           <span>إحداثيات مسجلة مسبقاً:&nbsp;<span className="font-mono font-semibold">{Number(agentLat).toFixed(4)}, {Number(agentLng).toFixed(4)}</span>&nbsp;—&nbsp;يمكن تحديثها</span>
         </div>
       )}
-      <button type="button" onClick={handleGps} disabled={gpsLoading}
-        className="w-full rounded-xl border-2 border-dashed border-red-300 bg-red-50 py-3 text-sm font-semibold text-red-600 hover:bg-red-100 transition-colors disabled:opacity-60">
-        {gpsLoading ? "⏳ جارٍ تحديد الموقع..." : "📍 تحديد الموقع الحالي بالـ GPS"}
-      </button>
+      <div className="grid gap-2 md:grid-cols-2">
+        <button type="button" onClick={handleGps} disabled={gpsLoading}
+          className="w-full rounded-xl border-2 border-dashed border-red-300 bg-red-50 py-3 text-sm font-semibold text-red-600 hover:bg-red-100 transition-colors disabled:opacity-60">
+          {gpsLoading ? "⏳ جارٍ تحديد الموقع..." : "📍 تحديد الموقع الحالي بالـ GPS"}
+        </button>
+        <button type="button"
+          onClick={() => {
+            if (!lat || !lng) { setGpsError("حدّد الإحداثيات أولاً ثم اضغط للتنقل"); return; }
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+            window.open(url, "_blank", "noopener,noreferrer");
+          }}
+          disabled={!lat || !lng}
+          title="يفتح خرائط Google للملاحة إلى الإحداثيات المحددة"
+          className="w-full rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50">
+          🧭 افتح في الخرائط للملاحة إلى الموقع
+        </button>
+      </div>
       {gpsError && <p className="text-xs text-red-500 text-center">{gpsError}</p>}
       <div className="h-64 rounded-xl overflow-hidden border border-gray-200">
         <MapContainer center={mapCenter} zoom={lat && lng ? 12 : 6} key={`${lat}-${lng}`} className="h-full w-full">

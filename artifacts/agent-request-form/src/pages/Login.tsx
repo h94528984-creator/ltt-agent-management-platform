@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { api } from "@/lib/api";
-import { saveAuth } from "@/lib/auth";
-import type { AuthResponse as AR } from "@/lib/api";
 import { Loader2 } from "lucide-react";
+import { saveAuth, type AuthUser } from "@/lib/auth";
 
 interface LoginProps {
   onLogin: () => void;
@@ -19,7 +17,16 @@ export default function Login({ onLogin }: LoginProps) {
     setError("");
     setLoading(true);
     try {
-      const data = await api.post<AR>("/auth/login", { email, password });
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "خطأ في تسجيل الدخول" }));
+        throw new Error(err.error ?? "خطأ في تسجيل الدخول");
+      }
+      const data = await res.json() as { token: string; user: AuthUser };
       saveAuth(data.token, data.user);
       onLogin();
     } catch (err: unknown) {
@@ -30,11 +37,11 @@ export default function Login({ onLogin }: LoginProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[hsl(220,55%,12%)] to-[hsl(220,55%,22%)] flex items-center justify-center p-4">
+    <div dir="rtl" className="min-h-screen bg-gradient-to-br from-[hsl(220,55%,12%)] to-[hsl(220,55%,22%)] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <img src="/ltt-tagline.png" alt="LTT" className="h-16 object-contain mx-auto mb-3" />
-          <p className="text-blue-200 text-sm">نظام إدارة المبيعات بالتجزئة — المنطقة الغربية</p>
+          <h1 className="text-white text-2xl font-bold mb-2">منصة متابعة عمليات المراكز والوكلاء</h1>
+          <p className="text-blue-200 text-sm">يرجى تسجيل الدخول للمتابعة</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-2xl p-8">
@@ -48,7 +55,8 @@ export default function Login({ onLogin }: LoginProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ltr"
+                autoComplete="username"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="example@ltt.ly"
                 dir="ltr"
               />
@@ -60,7 +68,8 @@ export default function Login({ onLogin }: LoginProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ltr"
+                autoComplete="current-password"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="••••••••"
                 dir="ltr"
               />
@@ -75,7 +84,7 @@ export default function Login({ onLogin }: LoginProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[hsl(220,55%,18%)] text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-[hsl(220,55%,22%)] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-lg py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
               {loading ? "جاري التحقق..." : "دخول"}
