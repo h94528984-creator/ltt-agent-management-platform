@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import type { AgentRequest } from "@/lib/api";
-import { Search, Eye, CheckCircle, XCircle, Clock, ChevronDown, Download } from "lucide-react";
+import { Search, Eye, CheckCircle, XCircle, Clock, ChevronDown, Download, Plus, X } from "lucide-react";
 import { exportCsv } from "@/lib/exportCsv";
 
 const STATUS_OPTIONS = [
@@ -191,6 +191,168 @@ function BoolField({ label, value }: { label: string; value: boolean | null | un
   );
 }
 
+const ENTITY_CREATE_OPTIONS = [
+  { value: "agent",          label: "وكيل جديد",            icon: "🧑‍💼" },
+  { value: "service_center", label: "مركز خدمة",            icon: "🏢" },
+  { value: "fixed_pos",      label: "نقطة بيع ثابتة",       icon: "🏪" },
+  { value: "mobile_van",     label: "سيارة بيع متنقلة",     icon: "🚐" },
+];
+
+const SERVICE_OPTIONS = ["ADSL", "4G", "FTTH", "Mobile Recharge", "بطاقات شحن", "تفعيل خطوط"];
+
+function CreateOperationModal({ onClose, onCreated }: { onClose: () => void; onCreated: (r: AgentRequest) => void }) {
+  const [entityType, setEntityType] = useState("agent");
+  const [entityName, setEntityName] = useState("");
+  const [responsibleEmployee, setResponsibleEmployee] = useState("");
+  const [employeePhone, setEmployeePhone] = useState("");
+  const [city, setCity] = useState("");
+  const [address, setAddress] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [services, setServices] = useState<string[]>([]);
+  const [hasSignboard, setHasSignboard] = useState(true);
+  const [hasDevices, setHasDevices] = useState(true);
+  const [internetQuality, setInternetQuality] = useState("good");
+  const [staffCount, setStaffCount] = useState("1");
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function toggleService(s: string) {
+    setServices((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!entityName.trim() || !responsibleEmployee.trim() || !employeePhone.trim() || !city.trim()) {
+      setError("الرجاء ملء الحقول الإلزامية: الاسم، المسؤول، الهاتف، المدينة");
+      return;
+    }
+    setSaving(true); setError(null);
+    try {
+      const created = await api.post<AgentRequest>("/agent-requests", {
+        entityType,
+        entityName: entityName.trim(),
+        responsibleEmployee: responsibleEmployee.trim(),
+        employeePhone: employeePhone.trim(),
+        city: city.trim(),
+        address: address.trim() || null,
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
+        hasSignboard, hasDevices, internetQuality,
+        staffCount: parseInt(staffCount || "1") || 1,
+        services, notes: notes.trim() || null,
+      });
+      onCreated(created);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "حدث خطأ عند الحفظ");
+    } finally { setSaving(false); }
+  }
+
+  const selectedOpt = ENTITY_CREATE_OPTIONS.find((o) => o.value === entityType);
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+      <form className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl my-4" onClick={(e) => e.stopPropagation()} onSubmit={submit}>
+        <div className="border-b border-border px-6 py-4 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+          <h2 className="font-bold text-foreground">إنشاء عملية جديدة</h2>
+          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">نوع العملية *</label>
+            <div className="grid grid-cols-4 gap-2">
+              {ENTITY_CREATE_OPTIONS.map((o) => (
+                <button key={o.value} type="button" onClick={() => setEntityType(o.value)}
+                  className={`border-2 rounded-lg px-3 py-3 text-xs font-medium transition-colors ${entityType === o.value ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>
+                  <div className="text-xl mb-1">{o.icon}</div>{o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">اسم {selectedOpt?.label} *</label>
+              <input value={entityName} onChange={(e) => setEntityName(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm" placeholder="الاسم..." />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">الموظف المسؤول *</label>
+              <input value={responsibleEmployee} onChange={(e) => setResponsibleEmployee(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm" placeholder="اسم الموظف" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">هاتف المسؤول *</label>
+              <input value={employeePhone} onChange={(e) => setEmployeePhone(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm" placeholder="091XXXXXXX" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">المدينة *</label>
+              <input value={city} onChange={(e) => setCity(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm" placeholder="طرابلس" />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-1">العنوان</label>
+              <input value={address} onChange={(e) => setAddress(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm" placeholder="العنوان الكامل" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">خط العرض (latitude)</label>
+              <input value={latitude} onChange={(e) => setLatitude(e.target.value)} type="number" step="any" className="w-full border border-border rounded-lg px-3 py-2 text-sm" placeholder="32.8872" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">خط الطول (longitude)</label>
+              <input value={longitude} onChange={(e) => setLongitude(e.target.value)} type="number" step="any" className="w-full border border-border rounded-lg px-3 py-2 text-sm" placeholder="13.1913" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">عدد الموظفين</label>
+              <input value={staffCount} onChange={(e) => setStaffCount(e.target.value)} type="number" min="1" className="w-full border border-border rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">جودة الإنترنت</label>
+              <select value={internetQuality} onChange={(e) => setInternetQuality(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white">
+                <option value="good">جيد</option><option value="medium">متوسط</option><option value="weak">ضعيف</option>
+              </select>
+            </div>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" checked={hasSignboard} onChange={(e) => setHasSignboard(e.target.checked)} className="rounded" />
+              لافتة تجارية موجودة
+            </label>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" checked={hasDevices} onChange={(e) => setHasDevices(e.target.checked)} className="rounded" />
+              أجهزة مكتبية موجودة
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">الخدمات المتوفرة</label>
+            <div className="flex flex-wrap gap-2">
+              {SERVICE_OPTIONS.map((s) => (
+                <button key={s} type="button" onClick={() => toggleService(s)}
+                  className={`px-3 py-1.5 border-2 rounded-full text-xs font-medium transition-colors ${services.includes(s) ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">ملاحظات</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full border border-border rounded-lg px-3 py-2 text-sm" />
+          </div>
+
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+        </div>
+
+        <div className="border-t border-border px-6 py-3 flex justify-end gap-2 sticky bottom-0 bg-white rounded-b-2xl">
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-muted">إلغاء</button>
+          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50">
+            {saving ? "جاري الحفظ..." : "إنشاء العملية"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export default function Inspections() {
   const [records, setRecords] = useState<AgentRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -198,6 +360,7 @@ export default function Inspections() {
   const [statusFilter, setStatusFilter] = useState("");
   const [entityFilter, setEntityFilter] = useState("");
   const [selected, setSelected] = useState<AgentRequest | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
   const [page, setPage] = useState(0);
   const PER_PAGE = 20;
 
@@ -270,14 +433,23 @@ export default function Inspections() {
           <h1 className="text-2xl font-bold text-foreground">تقارير التفتيش الميداني</h1>
           <p className="text-muted-foreground text-sm mt-1">استعراض وإدارة جميع تقارير الجولات التفتيشية</p>
         </div>
-        <button
-          onClick={exportToCsv}
-          disabled={filtered.length === 0}
-          className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm hover:bg-muted disabled:opacity-50 transition-colors"
-        >
-          <Download size={15} />
-          تصدير CSV
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowCreate(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors"
+          >
+            <Plus size={15} />
+            إنشاء عملية جديدة
+          </button>
+          <button
+            onClick={exportToCsv}
+            disabled={filtered.length === 0}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm hover:bg-muted disabled:opacity-50 transition-colors"
+          >
+            <Download size={15} />
+            تصدير CSV
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
@@ -385,6 +557,13 @@ export default function Inspections() {
 
       {selected && (
         <DetailModal record={selected} onClose={() => setSelected(null)} onStatusChange={handleStatusChange} />
+      )}
+
+      {showCreate && (
+        <CreateOperationModal
+          onClose={() => setShowCreate(false)}
+          onCreated={(r) => setRecords((prev) => [r, ...prev])}
+        />
       )}
     </div>
   );
