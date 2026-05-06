@@ -4,11 +4,11 @@ import type { AgentRequest } from "@/lib/api";
 import { Search, ChevronDown, AlertCircle, Clock, CheckCircle2, Plus, X, MapPin, Navigation, Inbox } from "lucide-react";
 
 const TICKET_TITLE_PRESETS = [
-  { value: "تفتيش على وكيل قائم",        icon: "🔍", category: "compliance",  entityType: "agent" },
-  { value: "إنشاء وكيل جديد",             icon: "➕", category: "other",        entityType: "agent" },
-  { value: "مركز خدمات",                  icon: "🏢", category: "technical",    entityType: "service_center" },
-  { value: "نقطة بيع ثابتة",              icon: "🏪", category: "technical",    entityType: "fixed_pos" },
-  { value: "سيارة بيع وخدمات متنقلة",     icon: "🚐", category: "technical",    entityType: "mobile_van" },
+  { value: "تفتيش على وكيل قائم",        icon: "🔍", category: "compliance",  entityType: "agent",          manual: false },
+  { value: "إنشاء وكيل جديد",             icon: "➕", category: "other",        entityType: "agent",          manual: true  },
+  { value: "مركز خدمات",                  icon: "🏢", category: "technical",    entityType: "service_center", manual: false },
+  { value: "نقطة بيع ثابتة",              icon: "🏪", category: "technical",    entityType: "fixed_pos",      manual: false },
+  { value: "سيارة بيع وخدمات متنقلة",     icon: "🚐", category: "technical",    entityType: "mobile_van",     manual: false },
 ];
 
 interface Ticket {
@@ -81,7 +81,7 @@ function CreateTicketModal({ users, entities, agents, onClose, onCreated }: { us
   const [error, setError] = useState<string | null>(null);
 
   const preset = titleIdx != null ? TICKET_TITLE_PRESETS[titleIdx] : null;
-  const entityChoices: EntityChoice[] = preset
+  const entityChoices: EntityChoice[] = preset && !preset.manual
     ? preset.entityType === "agent"
       ? agents
           .filter((a) => a.status !== "inactive")
@@ -164,7 +164,13 @@ function CreateTicketModal({ users, entities, agents, onClose, onCreated }: { us
             </div>
           </div>
 
-          {preset && entityChoices.length > 0 && (
+          {preset?.manual && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+              ℹ️ هذا وكيل جديد غير مسجّل في النظام — أدخل بياناته يدوياً ليتم دراسة الطلب.
+            </div>
+          )}
+
+          {preset && !preset.manual && entityChoices.length > 0 && (
             <div>
               <label className="block text-sm font-medium mb-1">اختر {preset.value} (يملأ العنوان والإحداثيات تلقائياً)</label>
               <select value={linkedEntityId} onChange={(e) => pickEntity(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white">
