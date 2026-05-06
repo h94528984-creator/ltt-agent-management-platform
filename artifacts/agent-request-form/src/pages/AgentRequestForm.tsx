@@ -6,6 +6,7 @@ import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
+import { AGENTS, type AgentEntry } from "../data/agentsList";
 
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, shadowUrl: markerShadow });
@@ -69,7 +70,7 @@ type FormData = {
 };
 
 type Scores = { readiness: number; sales: number; compliance: number; final: number };
-type SubmitResult = { requestId: string; finalScore: number; data: FormData; scores: Scores };
+type SubmitResult = { requestId: string; finalScore: number; data: FormData; scores: Scores; agentEntry: AgentEntry | null };
 
 type PhotoCatKey = "sitePhotos" | "interiorPhotos" | "equipmentPhotos";
 type PhotoCategory = { key: PhotoCatKey; label: string; icon: string };
@@ -92,14 +93,12 @@ function calcScores(f: FormData): Scores {
   if (f.areaTraffic === "high")        sales += 40;
   else if (f.areaTraffic === "medium") sales += 25;
   else                                  sales += 10;
-
   const street = parseInt(f.marketDensitySameStreet || "0");
   if (street === 0)      sales += 30;
   else if (street === 1) sales += 22;
   else if (street === 2) sales += 15;
   else if (street <= 4)  sales += 8;
   else                   sales += 3;
-
   const totalTx = (parseInt(f.transactionVolumeAdsl || "0")) + (parseInt(f.transactionVolume4g || "0"));
   if (totalTx >= 1000)     sales += 30;
   else if (totalTx >= 500) sales += 22;
@@ -135,14 +134,9 @@ function MapPicker({ onPick }: { onPick: (lat: number, lng: number) => void }) {
   return <ClickHandler />;
 }
 
-function PhotoUploadSection({
-  cat, files, previews, onAdd, onRemove,
-}: {
-  cat: PhotoCategory;
-  files: File[];
-  previews: string[];
-  onAdd: (f: FileList | null) => void;
-  onRemove: (i: number) => void;
+function PhotoUploadSection({ cat, files, previews, onAdd, onRemove }: {
+  cat: PhotoCategory; files: File[]; previews: string[];
+  onAdd: (f: FileList | null) => void; onRemove: (i: number) => void;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   return (
@@ -150,12 +144,10 @@ function PhotoUploadSection({
       <label className="block text-sm font-semibold text-gray-700">
         {cat.icon} {cat.label} <span className="text-gray-400 font-normal">(حتى 5 ملفات)</span>
       </label>
-      <div
-        className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-colors"
+      <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-colors"
         onClick={() => ref.current?.click()}
         onDrop={e => { e.preventDefault(); onAdd(e.dataTransfer.files); }}
-        onDragOver={e => e.preventDefault()}
-      >
+        onDragOver={e => e.preventDefault()}>
         <p className="text-sm text-gray-500">
           {files.length === 0 ? "اسحب الملفات هنا أو انقر للاختيار" : `${files.length} ملف محدد`}
         </p>
@@ -172,9 +164,7 @@ function PhotoUploadSection({
                 <div className="w-full h-full flex items-center justify-center text-2xl">📄</div>
               )}
               <button type="button" onClick={() => onRemove(i)}
-                className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xl">
-                ✕
-              </button>
+                className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xl">✕</button>
             </div>
           ))}
         </div>
@@ -183,19 +173,98 @@ function PhotoUploadSection({
   );
 }
 
+function AgentSelector({ selected, onSelect }: { selected: AgentEntry | null; onSelect: (a: AgentEntry) => void }) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filtered = search.trim().length < 1
+    ? AGENTS
+    : AGENTS.filter(a =>
+        a.name.includes(search) ||
+        a.city.includes(search) ||
+        a.phone.includes(search) ||
+        String(a.id).includes(search)
+      );
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen(o => !o)}
+        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-right flex items-center justify-between hover:border-orange-400 transition-colors focus:outline-none focus:border-orange-500 bg-white">
+        {selected ? (
+          <div className="text-right">
+            <div className="font-bold text-gray-900 text-sm">{selected.name}</div>
+            <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-3">
+              {selected.city && <span>📍 {selected.city}</span>}
+              {selected.phone && <span>📞 {selected.phone}</span>}
+              {selected.lat !== null && <span className="text-green-600">✓ إحداثيات متوفرة</span>}
+            </div>
+          </div>
+        ) : (
+          <span className="text-gray-400">— ابحث أو اختر الوكيل —</span>
+        )}
+        <span className="text-gray-400 mr-2">{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 w-full bg-white border-2 border-orange-300 rounded-xl shadow-2xl mt-1 overflow-hidden">
+          <div className="p-3 border-b border-gray-100">
+            <input autoFocus
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
+              placeholder="🔍  ابحث بالاسم أو المدينة أو رقم الهاتف…"
+              value={search} onChange={e => setSearch(e.target.value)} />
+            <p className="text-xs text-gray-400 mt-1 text-center">{filtered.length} وكيل</p>
+          </div>
+          <div className="max-h-64 overflow-y-auto">
+            {filtered.map(a => (
+              <button key={a.id} type="button"
+                onClick={() => { onSelect(a); setOpen(false); setSearch(""); }}
+                className={`w-full text-right px-4 py-3 hover:bg-orange-50 transition-colors border-b border-gray-50 last:border-0 ${selected?.id === a.id ? "bg-orange-50" : ""}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-gray-900 truncate">{a.name}</div>
+                    <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
+                      {a.city && <span>📍 {a.city}</span>}
+                      {a.phone && <span>📞 {a.phone}</span>}
+                      {a.lat !== null && <span className="text-green-600 font-medium">📌 GPS</span>}
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-300 flex-shrink-0 mt-1">#{a.id}</span>
+                </div>
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <div className="text-center py-8 text-gray-400 text-sm">لا توجد نتائج</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SuccessScreen({ result, onReset }: { result: SubmitResult; onReset: () => void }) {
   const scoreColor = result.scores.final >= 80 ? "text-green-600" : result.scores.final >= 60 ? "text-yellow-600" : "text-red-600";
-  const classification = result.scores.final >= 80 ? "مؤهل للموافقة ✅" : result.scores.final >= 60 ? "يحتاج مراجعة ⚠️" : "غير مؤهل حالياً ❌";
+  const classification =
+    result.scores.final >= 80 ? "أداء ممتاز ✅" :
+    result.scores.final >= 60 ? "أداء جيد — يحتاج متابعة ⚠️" : "أداء ضعيف — تدخل فوري مطلوب ❌";
   const activityLabel = ACTIVITY_TYPES.find(a => a.value === result.data.activityType)?.label ?? result.data.activityType;
 
   const handleWhatsApp = () => {
     const msg = encodeURIComponent(
-      `*طلب تسجيل وكيل جديد — LTT المنطقة الغربية*\n` +
-      `رقم الطلب: ${result.requestId}\n` +
-      `المندوب: ${result.data.representativeName}\n` +
-      `اسم الوكيل: ${result.data.agentName}\n` +
+      `*تقرير جولة تفتيشية — LTT المنطقة الغربية*\n` +
+      `رقم التقرير: ${result.requestId}\n` +
+      `المفتش: ${result.data.representativeName}\n` +
+      `الوكيل: ${result.data.agentName}\n` +
       `الجوال: ${result.data.mobile}\n` +
-      (result.data.landline ? `الثابت: ${result.data.landline}\n` : "") +
       `المدينة: ${result.data.city}\n` +
       (result.data.fullAddress ? `العنوان: ${result.data.fullAddress}\n` : "") +
       `نوع النشاط: ${activityLabel}\n` +
@@ -208,10 +277,10 @@ function SuccessScreen({ result, onReset }: { result: SubmitResult; onReset: () 
   const handleExcelExport = () => {
     const d = result.data; const s = result.scores;
     const ws = XLSX.utils.json_to_sheet([{
-      "رقم الطلب": result.requestId,
+      "رقم التقرير": result.requestId,
       "التاريخ": new Date().toLocaleDateString("ar-LY"),
-      "اسم المندوب": d.representativeName,
-      "اسم الوكيل / المحل": d.agentName,
+      "اسم المفتش": d.representativeName,
+      "اسم الوكيل": d.agentName,
       "الجوال": d.mobile,
       "الهاتف الثابت": d.landline || "—",
       "البريد الإلكتروني": d.agentEmail || "—",
@@ -219,8 +288,8 @@ function SuccessScreen({ result, onReset }: { result: SubmitResult; onReset: () 
       "العنوان الكامل": d.fullAddress || "—",
       "نوع النشاط": activityLabel,
       "الإحداثيات": d.latitude ? `${d.latitude}, ${d.longitude}` : "—",
-      "لافتة إعلانية": d.hasSignboard === "true" ? "نعم" : "لا",
-      "أجهزة": d.hasDevices === "true" ? "نعم" : "لا",
+      "لافتة LTT": d.hasSignboard === "true" ? "نعم" : "لا",
+      "أجهزة وحاسوب": d.hasDevices === "true" ? "نعم" : "لا",
       "جودة الإنترنت": d.internetQuality,
       "جاهزية الموظفين": `${d.staffReadiness}/5`,
       "حركة المنطقة": d.areaTraffic,
@@ -229,7 +298,7 @@ function SuccessScreen({ result, onReset }: { result: SubmitResult; onReset: () 
       "معاملات ADSL شهرياً": d.transactionVolumeAdsl,
       "معاملات 4G شهرياً": d.transactionVolume4g,
       "مستندات مكتملة": d.documentsComplete === "true" ? "نعم" : "لا",
-      "الهوية البصرية": d.brandIdentityCompliant === "true" ? "نعم" : "لا",
+      "الهوية البصرية LTT": d.brandIdentityCompliant === "true" ? "نعم" : "لا",
       "درجة الجاهزية (40%)": s.readiness,
       "درجة السوق (35%)": s.sales,
       "درجة الامتثال (25%)": s.compliance,
@@ -237,14 +306,13 @@ function SuccessScreen({ result, onReset }: { result: SubmitResult; onReset: () 
       "التصنيف": classification,
     }]);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "طلب الوكيل");
-    XLSX.writeFile(wb, `LTT_Agent_${result.requestId}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "تقرير التفتيش");
+    XLSX.writeFile(wb, `LTT_Inspection_${result.requestId}.xlsx`);
   };
 
   const handlePdfExport = () => {
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const d = result.data; const s = result.scores;
-
     doc.setFillColor(26, 54, 112);
     doc.rect(0, 0, 210, 34, "F");
     doc.setTextColor(255, 255, 255);
@@ -252,15 +320,13 @@ function SuccessScreen({ result, onReset }: { result: SubmitResult; onReset: () 
     doc.setFontSize(16);
     doc.text("Libya Telecom & Technology", 105, 12, { align: "center" });
     doc.setFontSize(11);
-    doc.text("Agent Evaluation Request — Western Region", 105, 21, { align: "center" });
+    doc.text("Field Inspection Report — Western Region", 105, 21, { align: "center" });
     doc.setFontSize(9);
-    doc.text(`Request: ${result.requestId}   |   Date: ${new Date().toLocaleDateString()}`, 105, 29, { align: "center" });
-
+    doc.text(`Report: ${result.requestId}   |   Date: ${new Date().toLocaleDateString()}`, 105, 29, { align: "center" });
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(9);
-
     const rows: [string, string][] = [
-      ["Representative (LTT)", d.representativeName],
+      ["Inspector (LTT)", d.representativeName],
       ["Agent / Shop Name", d.agentName],
       ["Mobile", d.mobile],
       ["Landline", d.landline || "—"],
@@ -269,51 +335,43 @@ function SuccessScreen({ result, onReset }: { result: SubmitResult; onReset: () 
       ["Full Address", d.fullAddress || "—"],
       ["Activity Type", activityLabel],
       ["GPS", d.latitude ? `${parseFloat(d.latitude).toFixed(5)}, ${parseFloat(d.longitude).toFixed(5)}` : "N/A"],
-      ["Signboard / Banner", d.hasSignboard === "true" ? "Yes" : "No"],
-      ["Devices & Equipment", d.hasDevices === "true" ? "Yes" : "No"],
+      ["LTT Signboard", d.hasSignboard === "true" ? "Present" : "Missing"],
+      ["Devices & Equipment", d.hasDevices === "true" ? "Present" : "Missing"],
       ["Internet Quality", d.internetQuality === "good" ? "Good" : d.internetQuality === "medium" ? "Medium" : "Poor"],
       ["Staff Readiness", `${d.staffReadiness}/5`],
       ["Area Traffic", d.areaTraffic === "high" ? "High" : d.areaTraffic === "medium" ? "Medium" : "Low"],
-      ["LTT Competitors — City", d.marketDensitySameCity],
-      ["LTT Competitors — Street", d.marketDensitySameStreet],
+      ["LTT Competitors — City", d.marketDensitySameCity || "0"],
+      ["LTT Competitors — Street", d.marketDensitySameStreet || "0"],
       ["ADSL Transactions / Month", d.transactionVolumeAdsl || "0"],
       ["4G Transactions / Month", d.transactionVolume4g || "0"],
-      ["Total Tx / Month", String((parseInt(d.transactionVolumeAdsl || "0") + parseInt(d.transactionVolume4g || "0")))],
       ["Documents Complete", d.documentsComplete === "true" ? "Yes" : "No"],
       ["Brand Identity Compliant", d.brandIdentityCompliant === "true" ? "Yes" : "No"],
       ["Notes", d.notes || "N/A"],
     ];
-
     let y = 42;
     rows.forEach(([label, value]) => {
       doc.setFont("helvetica", "bold"); doc.text(label + ":", 15, y);
       doc.setFont("helvetica", "normal"); doc.text(String(value), 80, y);
       y += 7;
     });
-
     y += 3;
     doc.setFillColor(26, 54, 112);
     doc.rect(15, y, 180, 7, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.text("EVALUATION SCORES", 105, y + 5, { align: "center" });
+    doc.text("INSPECTION SCORES", 105, y + 5, { align: "center" });
     doc.setTextColor(0, 0, 0); y += 12;
-
-    [
-      ["Operational Readiness (40%)", s.readiness],
-      ["Market Potential (35%)", s.sales],
-      ["Compliance (25%)", s.compliance],
-    ].forEach(([lbl, val]) => {
+    [["Operational Readiness (40%)", s.readiness], ["Market Potential (35%)", s.sales], ["Compliance (25%)", s.compliance]].forEach(([lbl, val]) => {
       doc.setFont("helvetica", "normal"); doc.text(String(lbl) + ":", 15, y);
       doc.setFont("helvetica", "bold"); doc.text(`${val}/100`, 180, y, { align: "right" });
       y += 7;
     });
     y += 3;
     doc.setFontSize(12);
+    const verdict = s.final >= 80 ? "EXCELLENT" : s.final >= 60 ? "NEEDS FOLLOW-UP" : "IMMEDIATE ACTION REQUIRED";
     doc.setFont("helvetica", "bold");
-    const verdict = s.final >= 80 ? "QUALIFIED" : s.final >= 60 ? "NEEDS REVIEW" : "NOT QUALIFIED";
     doc.text(`FINAL SCORE: ${s.final}/100  —  ${verdict}`, 105, y, { align: "center" });
-    doc.save(`LTT_Agent_${result.requestId}.pdf`);
+    doc.save(`LTT_Inspection_${result.requestId}.pdf`);
   };
 
   return (
@@ -323,23 +381,23 @@ function SuccessScreen({ result, onReset }: { result: SubmitResult; onReset: () 
           <div className="flex justify-center">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
               <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">تم إرسال الطلب بنجاح</h2>
-          <p className="text-gray-500">رقم الطلب: <span className="font-mono font-bold text-blue-700">{result.requestId}</span></p>
+          <h2 className="text-2xl font-bold text-gray-900">تم تسجيل نتيجة الجولة التفتيشية</h2>
+          <p className="text-gray-500">رقم التقرير: <span className="font-mono font-bold text-blue-700">{result.requestId}</span></p>
         </div>
 
         <div className="bg-gray-50 rounded-xl p-5">
-          <h3 className="font-bold text-gray-800 border-b pb-2 mb-3">ملخص الطلب</h3>
+          <h3 className="font-bold text-gray-800 border-b pb-2 mb-3">ملخص الزيارة</h3>
           <div className="grid grid-cols-2 gap-2 text-sm text-right">
-            <div><span className="text-gray-500">المندوب: </span><span className="font-semibold">{result.data.representativeName}</span></div>
-            <div><span className="text-gray-500">اسم الوكيل: </span><span className="font-semibold">{result.data.agentName}</span></div>
+            <div><span className="text-gray-500">المفتش: </span><span className="font-semibold">{result.data.representativeName}</span></div>
+            <div><span className="text-gray-500">الوكيل: </span><span className="font-semibold">{result.data.agentName}</span></div>
             <div><span className="text-gray-500">الجوال: </span><span className="font-semibold">{result.data.mobile}</span></div>
-            {result.data.landline && <div><span className="text-gray-500">الثابت: </span><span className="font-semibold">{result.data.landline}</span></div>}
             <div><span className="text-gray-500">المدينة: </span><span className="font-semibold">{result.data.city}</span></div>
             <div><span className="text-gray-500">النشاط: </span><span className="font-semibold">{activityLabel}</span></div>
+            <div><span className="text-gray-500">التاريخ: </span><span className="font-semibold">{new Date().toLocaleDateString("ar-LY")}</span></div>
             {result.data.fullAddress && <div className="col-span-2"><span className="text-gray-500">العنوان: </span><span className="font-semibold">{result.data.fullAddress}</span></div>}
           </div>
         </div>
@@ -375,7 +433,7 @@ function SuccessScreen({ result, onReset }: { result: SubmitResult; onReset: () 
           </button>
           <button onClick={onReset}
             className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors text-sm">
-            ➕ طلب جديد
+            🔍 تفتيش وكيل آخر
           </button>
         </div>
 
@@ -410,10 +468,11 @@ type PreviewState = Record<PhotoCatKey, string[]>;
 
 export default function AgentRequestForm() {
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
+  const [selectedAgent, setSelectedAgent] = useState<AgentEntry | null>(null);
   const [photos, setPhotos] = useState<PhotoState>({ sitePhotos: [], interiorPhotos: [], equipmentPhotos: [] });
   const [previews, setPreviews] = useState<PreviewState>({ sitePhotos: [], interiorPhotos: [], equipmentPhotos: [] });
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData | "agentSelect", string>>>({});
   const [gpsLoading, setGpsLoading] = useState(false);
   const [mapPos, setMapPos] = useState<[number, number] | null>(null);
   const [submitResult, setSubmitResult] = useState<SubmitResult | null>(null);
@@ -424,6 +483,23 @@ export default function AgentRequestForm() {
   const handleRepresentativeChange = (name: string) => {
     const rep = REPRESENTATIVES.find(r => r.name === name);
     setForm(f => ({ ...f, representativeName: name, representativeEmail: rep?.email ?? "" }));
+  };
+
+  const handleAgentSelect = (agent: AgentEntry) => {
+    setSelectedAgent(agent);
+    setForm(f => ({
+      ...f,
+      agentName:  agent.name.trim(),
+      mobile:     agent.phone || f.mobile,
+      agentEmail: agent.email || f.agentEmail,
+      city:       agent.city || f.city,
+      latitude:   agent.lat !== null ? String(agent.lat) : f.latitude,
+      longitude:  agent.lng !== null ? String(agent.lng) : f.longitude,
+    }));
+    if (agent.lat !== null && agent.lng !== null) {
+      setMapPos([agent.lat, agent.lng]);
+    }
+    setErrors(e => ({ ...e, agentSelect: undefined, agentName: undefined, city: undefined }));
   };
 
   const handlePhotos = (cat: PhotoCatKey, files: FileList | null) => {
@@ -466,12 +542,12 @@ export default function AgentRequestForm() {
   }, []);
 
   const validate = (): boolean => {
-    const e: Partial<Record<keyof FormData, string>> = {};
+    const e: Partial<Record<keyof FormData | "agentSelect", string>> = {};
     if (!form.representativeName) e.representativeName = "مطلوب";
+    if (!selectedAgent)           e.agentSelect = "يرجى اختيار الوكيل من القائمة";
     if (!form.agentName)           e.agentName = "مطلوب";
-    if (!form.mobile)              e.mobile = "مطلوب";
     if (!form.city)                e.city = "مطلوب";
-    if (!form.activityType)        e.activityType = "مطلوب";
+    if (!form.activityType)        e.activityType = "يرجى تحديد نوع النشاط";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -492,7 +568,7 @@ export default function AgentRequestForm() {
         throw new Error((err as { error?: string }).error);
       }
       const saved = await res.json() as { requestId: string; finalScore: number };
-      setSubmitResult({ requestId: saved.requestId, finalScore: saved.finalScore, data: form, scores });
+      setSubmitResult({ requestId: saved.requestId, finalScore: saved.finalScore, data: form, scores, agentEntry: selectedAgent });
     } catch (err) {
       alert(err instanceof Error ? err.message : "حدث خطأ في الإرسال");
     } finally {
@@ -502,9 +578,11 @@ export default function AgentRequestForm() {
 
   const handleReset = () => {
     setSubmitResult(null);
+    setSelectedAgent(null);
     setForm(EMPTY_FORM);
     setPhotos({ sitePhotos: [], interiorPhotos: [], equipmentPhotos: [] });
     setPreviews({ sitePhotos: [], interiorPhotos: [], equipmentPhotos: [] });
+    setMapPos(null);
     setErrors({});
   };
 
@@ -519,7 +597,7 @@ export default function AgentRequestForm() {
 
   const inp  = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent outline-none bg-white";
   const lbl  = "block text-sm font-semibold text-gray-700 mb-1";
-  const err  = "text-xs text-red-500 mt-1";
+  const errc = "text-xs text-red-500 mt-1";
   const sec  = "bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4";
   const stit = "text-base font-bold text-gray-900 mb-4 flex items-center gap-2";
 
@@ -530,12 +608,12 @@ export default function AgentRequestForm() {
           <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
             <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/>
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
             </svg>
           </div>
           <div>
             <div className="text-xs text-orange-300 font-semibold">Libya Telecom & Technology</div>
-            <h1 className="text-xl font-black">نموذج تقييم وتسجيل وكيل جديد</h1>
+            <h1 className="text-xl font-black">نموذج تقييم الوكلاء — الجولات التفتيشية</h1>
             <div className="text-xs text-blue-200">المنطقة الغربية — قسم المبيعات بالتجزئة</div>
           </div>
         </div>
@@ -557,60 +635,73 @@ export default function AgentRequestForm() {
 
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
+        {/* Section 1: Inspector + Agent */}
         <div className={sec}>
           <h2 className={stit}>
             <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 text-sm font-bold flex items-center justify-center">١</span>
-            معلومات المندوب والوكيل
+            بيانات المفتش والوكيل
           </h2>
+
           <div>
-            <label className={lbl}>اسم المندوب (موظف LTT) *</label>
+            <label className={lbl}>اسم المفتش (موظف LTT) *</label>
             <select className={`${inp} ${errors.representativeName ? "border-red-400" : ""}`}
               value={form.representativeName} onChange={e => handleRepresentativeChange(e.target.value)}>
-              <option value="">— اختر المندوب —</option>
+              <option value="">— اختر المفتش —</option>
               {REPRESENTATIVES.map(r => <option key={r.email} value={r.name}>{r.name}</option>)}
             </select>
-            {errors.representativeName && <p className={err}>{errors.representativeName}</p>}
+            {errors.representativeName && <p className={errc}>{errors.representativeName}</p>}
           </div>
+
           <div>
-            <label className={lbl}>اسم الوكيل / المحل التجاري *</label>
-            <input className={`${inp} ${errors.agentName ? "border-red-400" : ""}`}
-              placeholder="الاسم الكامل للوكيل أو المحل" value={form.agentName}
-              onChange={e => set("agentName", e.target.value)} />
-            {errors.agentName && <p className={err}>{errors.agentName}</p>}
+            <label className={lbl}>اختيار الوكيل *</label>
+            <AgentSelector selected={selectedAgent} onSelect={handleAgentSelect} />
+            {errors.agentSelect && <p className={errc}>{errors.agentSelect}</p>}
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={lbl}>الجوال *</label>
-              <input className={`${inp} ${errors.mobile ? "border-red-400" : ""}`}
-                placeholder="09XXXXXXXX" dir="ltr" value={form.mobile}
-                onChange={e => set("mobile", e.target.value)} />
-              {errors.mobile && <p className={err}>{errors.mobile}</p>}
+
+          {selectedAgent && (
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3">
+              <div className="flex items-center gap-2 text-blue-700 font-semibold text-sm mb-2">
+                <span>📋</span> بيانات الوكيل المسجلة — يمكن تعديلها
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>اسم الوكيل / المحل *</label>
+                  <input className={`${inp} ${errors.agentName ? "border-red-400" : ""}`}
+                    value={form.agentName} onChange={e => set("agentName", e.target.value)} />
+                  {errors.agentName && <p className={errc}>{errors.agentName}</p>}
+                </div>
+                <div>
+                  <label className={lbl}>المدينة *</label>
+                  <input className={`${inp} ${errors.city ? "border-red-400" : ""}`}
+                    value={form.city} onChange={e => set("city", e.target.value)} />
+                  {errors.city && <p className={errc}>{errors.city}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>الجوال</label>
+                  <input className={inp} dir="ltr" placeholder="09XXXXXXXX"
+                    value={form.mobile} onChange={e => set("mobile", e.target.value)} />
+                </div>
+                <div>
+                  <label className={lbl}>الهاتف الثابت</label>
+                  <input className={inp} dir="ltr" placeholder="021XXXXXXX"
+                    value={form.landline} onChange={e => set("landline", e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label className={lbl}>البريد الإلكتروني للوكيل</label>
+                <input className={inp} type="email" dir="ltr"
+                  value={form.agentEmail} onChange={e => set("agentEmail", e.target.value)} />
+              </div>
+              <div>
+                <label className={lbl}>العنوان التفصيلي</label>
+                <input className={inp} placeholder="الحي، الشارع، رقم المحل…"
+                  value={form.fullAddress} onChange={e => set("fullAddress", e.target.value)} />
+              </div>
             </div>
-            <div>
-              <label className={lbl}>الهاتف الثابت</label>
-              <input className={inp} placeholder="021XXXXXXX" dir="ltr"
-                value={form.landline} onChange={e => set("landline", e.target.value)} />
-            </div>
-          </div>
-          <div>
-            <label className={lbl}>البريد الإلكتروني للوكيل</label>
-            <input className={inp} type="email" placeholder="agent@email.com" dir="ltr"
-              value={form.agentEmail} onChange={e => set("agentEmail", e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={lbl}>المدينة *</label>
-              <input className={`${inp} ${errors.city ? "border-red-400" : ""}`}
-                placeholder="طرابلس، مصراتة، الزنتان…" value={form.city}
-                onChange={e => set("city", e.target.value)} />
-              {errors.city && <p className={err}>{errors.city}</p>}
-            </div>
-            <div>
-              <label className={lbl}>العنوان الكامل</label>
-              <input className={inp} placeholder="الحي، الشارع، رقم المحل…"
-                value={form.fullAddress} onChange={e => set("fullAddress", e.target.value)} />
-            </div>
-          </div>
+          )}
+
           <div>
             <label className={lbl}>نوع النشاط *</label>
             <div className="grid grid-cols-3 gap-2">
@@ -625,28 +716,44 @@ export default function AgentRequestForm() {
                 </button>
               ))}
             </div>
-            {errors.activityType && <p className={err}>{errors.activityType}</p>}
+            {errors.activityType && <p className={errc}>{errors.activityType}</p>}
           </div>
         </div>
 
+        {/* Section 2: Location */}
         <div className={sec}>
           <h2 className={stit}>
-            <span className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center">📍</span>
-            الموقع والمرفقات
+            <span className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-lg">📍</span>
+            الموقع الجغرافي
+            {form.latitude && <span className="mr-auto text-xs font-normal text-green-600 bg-green-50 px-2 py-0.5 rounded-full">✓ محدد</span>}
           </h2>
+
+          {selectedAgent?.lat !== null && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 flex items-center gap-2">
+              <span>📌</span>
+              <span>إحداثيات مسجلة مسبقاً: <strong className="font-mono">{selectedAgent?.lat?.toFixed(5)}, {selectedAgent?.lng?.toFixed(5)}</strong> — يمكن تحديثها</span>
+            </div>
+          )}
+
           <button type="button" onClick={handleGPS} disabled={gpsLoading}
             className="w-full py-2.5 border-2 border-dashed border-green-400 text-green-700 rounded-lg text-sm font-semibold hover:bg-green-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
-            {gpsLoading ? "جاري التحديد…" : "📍 تحديد الموقع تلقائيًا (GPS)"}
+            {gpsLoading ? "جاري التحديد…" : "📍 تحديد الموقع الحالي بالـ GPS"}
           </button>
+
           {form.latitude && (
             <div className="text-xs text-center text-green-700 bg-green-50 rounded-lg p-2 font-mono">
               {form.latitude} , {form.longitude}
+              <a href={`https://maps.google.com/?q=${form.latitude},${form.longitude}`}
+                target="_blank" rel="noopener noreferrer"
+                className="block text-blue-600 underline mt-1">عرض على خرائط Google</a>
             </div>
           )}
+
           <div>
-            <label className="block text-xs text-gray-500 mb-2">أو انقر على الخريطة لتحديد الموقع يدويًا</label>
-            <div className="rounded-xl overflow-hidden border border-gray-200" style={{ height: 220 }}>
-              <MapContainer center={mapPos ?? [32.9, 13.18]} zoom={mapPos ? 14 : 10}
+            <label className="block text-xs text-gray-500 mb-2">أو انقر على الخريطة لتحديد / تصحيح الموقع يدوياً</label>
+            <div className="rounded-xl overflow-hidden border border-gray-200" style={{ height: 240 }}>
+              <MapContainer
+                center={mapPos ?? [32.9, 13.18]} zoom={mapPos ? 14 : 7}
                 style={{ height: "100%", width: "100%" }}
                 key={mapPos ? `${mapPos[0]}-${mapPos[1]}` : "default"}>
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap" />
@@ -655,23 +762,15 @@ export default function AgentRequestForm() {
               </MapContainer>
             </div>
           </div>
+
           <div>
             <label className={lbl}>وصف الموقع (اختياري)</label>
-            <input className={inp} placeholder="مجاور لـ…، شارع…، بجانب…"
+            <input className={inp} placeholder="مجاور لـ…، شارع…، أمام…"
               value={form.locationDescription} onChange={e => set("locationDescription", e.target.value)} />
-          </div>
-          <div className="space-y-5 pt-3 border-t border-gray-100">
-            {PHOTO_CATS.map(cat => (
-              <PhotoUploadSection
-                key={cat.key} cat={cat}
-                files={photos[cat.key]} previews={previews[cat.key]}
-                onAdd={files => handlePhotos(cat.key, files)}
-                onRemove={i => removePhoto(cat.key, i)}
-              />
-            ))}
           </div>
         </div>
 
+        {/* Section 3: Readiness */}
         <div className={sec}>
           <h2 className={stit}>
             <span className="w-8 h-8 rounded-full bg-orange-100 text-orange-700 text-sm font-bold flex items-center justify-center">٢</span>
@@ -680,8 +779,8 @@ export default function AgentRequestForm() {
           </h2>
           <div className="grid grid-cols-2 gap-4">
             {([
-              ["hasSignboard", "توفر لافتة / لوحة إعلانية"],
-              ["hasDevices",   "توفر أجهزة وحاسوب"],
+              ["hasSignboard", "لافتة / لوحة LTT واضحة"],
+              ["hasDevices",   "أجهزة وحواسيب متوفرة"],
             ] as [keyof FormData, string][]).map(([key, label]) => (
               <div key={key}>
                 <label className={lbl}>{label}</label>
@@ -725,6 +824,7 @@ export default function AgentRequestForm() {
           </div>
         </div>
 
+        {/* Section 4: Market */}
         <div className={sec}>
           <h2 className={stit}>
             <span className="w-8 h-8 rounded-full bg-yellow-100 text-yellow-700 text-sm font-bold flex items-center justify-center">٣</span>
@@ -776,6 +876,7 @@ export default function AgentRequestForm() {
           </p>
         </div>
 
+        {/* Section 5: Compliance */}
         <div className={sec}>
           <h2 className={stit}>
             <span className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 text-sm font-bold flex items-center justify-center">٤</span>
@@ -806,18 +907,38 @@ export default function AgentRequestForm() {
           </div>
         </div>
 
+        {/* Section 6: Photos */}
+        <div className={sec}>
+          <h2 className={stit}>
+            <span className="w-8 h-8 rounded-full bg-pink-100 text-pink-700 text-lg flex items-center justify-center">📸</span>
+            صور الزيارة الميدانية
+          </h2>
+          <div className="space-y-5">
+            {PHOTO_CATS.map(cat => (
+              <PhotoUploadSection
+                key={cat.key} cat={cat}
+                files={photos[cat.key]} previews={previews[cat.key]}
+                onAdd={files => handlePhotos(cat.key, files)}
+                onRemove={i => removePhoto(cat.key, i)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Section 7: Notes */}
         <div className={sec}>
           <h2 className={stit}>
             <span className="w-8 h-8 rounded-full bg-gray-100 text-gray-700 text-sm font-bold flex items-center justify-center">٥</span>
-            ملاحظات عامة
+            ملاحظات المفتش
           </h2>
           <textarea className={`${inp} resize-none`} rows={4}
-            placeholder="أي ملاحظات إضافية حول الوكيل أو الموقع…"
+            placeholder="ملاحظات حول الزيارة، المشكلات المرصودة، التوصيات…"
             value={form.notes} onChange={e => set("notes", e.target.value)} />
         </div>
 
+        {/* Score summary */}
         <div className="bg-[hsl(220,55%,18%)] text-white rounded-2xl p-6 space-y-3">
-          <h3 className="font-bold text-lg">ملخص التقييم</h3>
+          <h3 className="font-bold text-lg">ملخص التقييم التفتيشي</h3>
           <div className="space-y-3">
             {[
               { label: "الجاهزية التشغيلية (40%)", val: scores.readiness,  color: "bg-blue-400" },
@@ -836,23 +957,23 @@ export default function AgentRequestForm() {
             ))}
           </div>
           <div className="border-t border-white/20 pt-3 flex justify-between items-center">
-            <span className="font-bold text-lg">النتيجة النهائية</span>
+            <span className="font-bold text-lg">التقييم النهائي</span>
             <span className={`text-4xl font-black ${scores.final >= 80 ? "text-green-400" : scores.final >= 60 ? "text-yellow-400" : "text-red-400"}`}>
               {scores.final}<span className="text-lg text-white/50">/100</span>
             </span>
           </div>
           <p className="text-xs text-white/50 text-center">
-            سيُرسل الطلب إلى: y.rahuma@ltt.ly — للمراجعة: s.zawia@ltt.ly
+            يُرسل التقرير إلى: y.rahuma@ltt.ly — للمراجعة: s.zawia@ltt.ly
           </p>
         </div>
 
         <button type="submit" disabled={submitting}
           className="w-full py-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white rounded-2xl text-lg font-black shadow-lg transition-all active:scale-95">
-          {submitting ? "جاري الإرسال…" : "إرسال الطلب للمراجعة"}
+          {submitting ? "جاري الإرسال…" : "إرسال تقرير الجولة التفتيشية"}
         </button>
 
         <p className="text-center text-xs text-gray-400 pb-6">
-          سيتم إرسال نسخة من الطلب بالبريد الإلكتروني إلى إدارة المبيعات والمراجعة
+          سيتم إرسال نسخة من التقرير بالبريد الإلكتروني إلى إدارة المبيعات والمراجعة
         </p>
       </form>
     </div>
