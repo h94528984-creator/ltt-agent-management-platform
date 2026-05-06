@@ -20,8 +20,8 @@ const CLASS_OPTIONS = [
 ];
 
 const ACTIVITY_TYPES = [
-  { value: "agent_main", label: "وكيل رئيسي" },
-  { value: "agent_sub", label: "وكيل فرعي" },
+  { value: "agent_main", label: "وكيل رئيسي - الفئة أ" },
+  { value: "agent_sub", label: "وكيل فرعي - الفئة ب" },
   { value: "service_center", label: "مركز خدمات" },
   { value: "fixed_pos", label: "نقطة بيع ثابتة" },
   { value: "mobile_van", label: "سيارة بيع وخدمات متنقلة" },
@@ -78,6 +78,7 @@ type NewAgentFormData = {
   email: string;
   city: string;
   address: string;
+  agentClass: string;
   channelType: string;
   classType: string;
   latitude: string;
@@ -223,7 +224,7 @@ export default function AgentRequestForm() {
   const [mode, setMode] = useState<Mode>("inspection");
   const [selectedAgent, setSelectedAgent] = useState<AgentEntry | null>(AGENTS[0] ?? null);
   const [form, setForm] = useState<InspectionFormData>({ agentName: AGENTS[0]?.name ?? "", agentEmail: AGENTS[0]?.email ?? "", city: AGENTS[0]?.city ?? "", fullAddress: AGENTS[0]?.address ?? "", mobile: AGENTS[0]?.phone ?? "", landline: "", activityType: ACTIVITY_TYPES[0]?.value ?? "", latitude: AGENTS[0]?.lat?.toString() ?? "", longitude: AGENTS[0]?.lng?.toString() ?? "", locationDescription: "", hasSignboard: "true", hasDevices: "true", internetQuality: "good", staffReadiness: "3", areaTraffic: "medium", marketDensitySameCity: "0", marketDensitySameStreet: "0", transactionVolumeAdsl: "0", transactionVolume4g: "0", documentsComplete: "true", brandIdentityCompliant: "true", notes: "", services: [] });
-  const [newAgentForm, setNewAgentForm] = useState<NewAgentFormData>({ name: "", phone: "", email: "", city: "", address: "", channelType: "agent_main", classType: "A", latitude: "", longitude: "", internetQuality: "good", hasSignboard: "true", hasDevices: "true", staffReadiness: "3", areaTraffic: "medium", services: [], notes: "" });
+  const [newAgentForm, setNewAgentForm] = useState<NewAgentFormData>({ name: "", phone: "", email: "", city: "", address: "", agentClass: "A", channelType: "agent_main", classType: "A", latitude: "", longitude: "", internetQuality: "good", hasSignboard: "true", hasDevices: "true", staffReadiness: "3", areaTraffic: "medium", services: [], notes: "" });
   const [photos, setPhotos] = useState<PhotoState>({ sitePhotos: [], interiorPhotos: [], equipmentPhotos: [] });
   const [photoPreviews, setPhotoPreviews] = useState<PhotoPreviewState>({ sitePhotos: [], interiorPhotos: [], equipmentPhotos: [] });
   const [docUploads, setDocUploads] = useState<DocUpload[]>(DOC_TYPES.map(d => ({ docType: d.value, file: null, notes: "" })));
