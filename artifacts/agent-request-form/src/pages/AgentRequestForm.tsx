@@ -479,22 +479,18 @@ export default function AgentRequestForm() {
                   <option value="medium">حركة المنطقة التجارية متوسطة</option>
                   <option value="low">حركة المنطقة التجارية منخفضة</option>
                 </select>
-                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.marketDensitySameCity} onChange={(e) => setForm({ ...form, marketDensitySameCity: e.target.value })}>
-                  <option value="0">منافسو نفس المدينة: 0</option>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5+</option>
-                </select>
-                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.marketDensitySameStreet} onChange={(e) => setForm({ ...form, marketDensitySameStreet: e.target.value })}>
-                  <option value="0">منافسو نفس الشارع: 0</option>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5+</option>
-                </select>
+                <input
+                  className="w-full rounded-xl border border-gray-200 p-3"
+                  value={form.marketDensitySameCity}
+                  onChange={(e) => setForm({ ...form, marketDensitySameCity: e.target.value })}
+                  placeholder="منافسو نفس المدينة (اكتب يدويًا)"
+                />
+                <input
+                  className="w-full rounded-xl border border-gray-200 p-3"
+                  value={form.marketDensitySameStreet}
+                  onChange={(e) => setForm({ ...form, marketDensitySameStreet: e.target.value })}
+                  placeholder="منافسو نفس الشارع (اكتب يدويًا)"
+                />
                 <input className="w-full rounded-xl border border-gray-200 p-3" value={form.transactionVolumeAdsl} onChange={(e) => setForm({ ...form, transactionVolumeAdsl: e.target.value })} placeholder="معاملات ADSL" />
                 <input className="w-full rounded-xl border border-gray-200 p-3" value={form.transactionVolume4g} onChange={(e) => setForm({ ...form, transactionVolume4g: e.target.value })} placeholder="معاملات 4G" />
               </div>
