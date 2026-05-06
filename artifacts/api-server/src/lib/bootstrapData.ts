@@ -44,7 +44,9 @@ export async function bootstrapDataIfEmpty(): Promise<void> {
 
     await client.query("BEGIN");
     for (const t of TABLES) {
-      await client.query(`TRUNCATE TABLE ${t} RESTART IDENTITY CASCADE`);
+      await client.query(
+        `TRUNCATE TABLE public.${t} RESTART IDENTITY CASCADE`,
+      );
     }
     await client.query(cleanedSql);
     await client.query("COMMIT");
