@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { Search, ChevronDown, AlertCircle, Clock, CheckCircle2, Plus, X, MapPin, Navigation } from "lucide-react";
+import type { AgentRequest } from "@/lib/api";
+import { Search, ChevronDown, AlertCircle, Clock, CheckCircle2, Plus, X, MapPin, Navigation, Inbox } from "lucide-react";
+
+const TICKET_TITLE_PRESETS = [
+  { value: "تفتيش على وكيل قائم",        icon: "🔍", category: "compliance",  entityType: "agent" },
+  { value: "إنشاء وكيل جديد",             icon: "➕", category: "other",        entityType: "agent" },
+  { value: "مركز خدمات",                  icon: "🏢", category: "technical",    entityType: "service_center" },
+  { value: "نقطة بيع ثابتة",              icon: "🏪", category: "technical",    entityType: "fixed_pos" },
+  { value: "سيارة بيع وخدمات متنقلة",     icon: "🚐", category: "technical",    entityType: "mobile_van" },
+];
 
 interface Ticket {
   id: number;
@@ -46,10 +55,10 @@ function mapsUrl(lat: number, lng: number) {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
 
-function CreateTicketModal({ users, onClose, onCreated }: { users: User[]; onClose: () => void; onCreated: (t: Ticket) => void }) {
-  const [title, setTitle] = useState("");
+function CreateTicketModal({ users, entities, onClose, onCreated }: { users: User[]; entities: AgentRequest[]; onClose: () => void; onCreated: (t: Ticket) => void }) {
+  const [titleIdx, setTitleIdx] = useState<number | null>(null);
+  const [linkedEntityId, setLinkedEntityId] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("technical");
   const [priority, setPriority] = useState("medium");
   const [agentId, setAgentId] = useState("");
   const [assignedToId, setAssignedToId] = useState("");
@@ -59,6 +68,28 @@ function CreateTicketModal({ users, onClose, onCreated }: { users: User[]; onClo
   const [gpsLoading, setGpsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const preset = titleIdx != null ? TICKET_TITLE_PRESETS[titleIdx] : null;
+  const entityChoices = preset
+    ? entities.filter((e) => e.entityType === preset.entityType && e.status !== "cancelled")
+    : [];
+
+  function pickPreset(i: number) {
+    setTitleIdx(i);
+    setLinkedEntityId("");
+    setLocationName(""); setLatitude(""); setLongitude(""); setAgentId("");
+  }
+
+  function pickEntity(idStr: string) {
+    setLinkedEntityId(idStr);
+    if (!idStr) { setLocationName(""); setLatitude(""); setLongitude(""); setAgentId(""); return; }
+    const e = entities.find((x) => String(x.id) === idStr);
+    if (!e) return;
+    setLocationName(`${e.agentName ?? ""}${e.city ? " — " + e.city : ""}`);
+    if (e.latitude != null) setLatitude(String(e.latitude));
+    if (e.longitude != null) setLongitude(String(e.longitude));
+    if (e.agentId != null) setAgentId(String(e.agentId));
+  }
 
   function captureGps() {
     if (!navigator.geolocation) { setError("المتصفح لا يدعم تحديد الموقع"); return; }
@@ -72,14 +103,15 @@ function CreateTicketModal({ users, onClose, onCreated }: { users: User[]; onClo
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) { setError("العنوان والوصف مطلوبان"); return; }
+    if (preset == null) { setError("الرجاء اختيار نوع التذكرة"); return; }
+    if (!description.trim()) { setError("الوصف مطلوب"); return; }
     setSaving(true); setError(null);
     try {
       const userRaw = localStorage.getItem("ltt_user");
       const createdById = userRaw ? (JSON.parse(userRaw).id as number) : 1;
       const body: Record<string, unknown> = {
-        title: title.trim(), description: description.trim(),
-        category, priority, createdById,
+        title: preset.value, description: description.trim(),
+        category: preset.category, priority, createdById,
       };
       if (agentId.trim()) body.agentId = parseInt(agentId.trim());
       if (assignedToId) body.assignedToId = parseInt(assignedToId);
@@ -103,26 +135,39 @@ function CreateTicketModal({ users, onClose, onCreated }: { users: User[]; onClo
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">العنوان *</label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm" placeholder="مثال: مشكلة في جهاز POS" />
+            <label className="block text-sm font-medium mb-2">نوع التذكرة *</label>
+            <div className="grid grid-cols-5 gap-2">
+              {TICKET_TITLE_PRESETS.map((p, i) => (
+                <button key={p.value} type="button" onClick={() => pickPreset(i)}
+                  className={`border-2 rounded-lg px-2 py-3 text-xs font-medium transition-colors flex flex-col items-center gap-1 text-center ${titleIdx === i ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>
+                  <span className="text-2xl">{p.icon}</span>
+                  <span className="leading-tight">{p.value}</span>
+                </button>
+              ))}
+            </div>
           </div>
+
+          {preset && entityChoices.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium mb-1">اختر {preset.value} (يملأ العنوان والإحداثيات تلقائياً)</label>
+              <select value={linkedEntityId} onChange={(e) => pickEntity(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white">
+                <option value="">— إدخال يدوي —</option>
+                {entityChoices.map((ent) => (
+                  <option key={ent.id} value={ent.id}>{ent.agentName} — {ent.city}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium mb-1">الوصف *</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full border border-border rounded-lg px-3 py-2 text-sm" />
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full border border-border rounded-lg px-3 py-2 text-sm" placeholder="تفاصيل المهمة أو المشكلة..." />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium mb-1">الفئة</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white">
-                {Object.entries(CATEGORY_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">الأولوية</label>
-              <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white">
-                {Object.entries(PRIORITY_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">الأولوية</label>
+            <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white">
+              {Object.entries(PRIORITY_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">إسناد إلى موظف</label>
@@ -165,25 +210,33 @@ function CreateTicketModal({ users, onClose, onCreated }: { users: User[]; onClo
 export default function Tickets() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [entities, setEntities] = useState<AgentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [onlyMine, setOnlyMine] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+
+  const userRaw = typeof window !== "undefined" ? localStorage.getItem("ltt_user") : null;
+  const currentUserId = userRaw ? (JSON.parse(userRaw).id as number) : null;
 
   useEffect(() => {
     Promise.all([
       api.get<Ticket[]>("/tickets").catch(() => [] as Ticket[]),
       api.get<User[]>("/users").catch(() => [] as User[]),
-    ]).then(([t, u]) => { setTickets(t); setUsers(u); }).finally(() => setLoading(false));
+      api.get<AgentRequest[]>("/agent-requests").catch(() => [] as AgentRequest[]),
+    ]).then(([t, u, e]) => { setTickets(t); setUsers(u); setEntities(e); }).finally(() => setLoading(false));
   }, []);
 
   const userMap = new Map(users.map((u) => [u.id, u]));
+  const myCount = currentUserId ? tickets.filter((t) => t.assignedToId === currentUserId && t.status !== "closed" && t.status !== "resolved").length : 0;
 
   const filtered = tickets.filter((t) => {
     const q = search.toLowerCase();
     const matchSearch = !q || t.title.toLowerCase().includes(q) || (t.description ?? "").toLowerCase().includes(q);
     const matchStatus = !statusFilter || t.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchMine = !onlyMine || (currentUserId != null && t.assignedToId === currentUserId);
+    return matchSearch && matchStatus && matchMine;
   });
 
   const summary = {
@@ -223,7 +276,12 @@ export default function Tickets() {
         ))}
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 items-center">
+        <button onClick={() => setOnlyMine((v) => !v)}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${onlyMine ? "bg-primary text-white border-primary" : "border-border hover:bg-muted"}`}>
+          <Inbox size={15} />
+          تذاكري {myCount > 0 && <span className={`px-1.5 py-0.5 rounded-full text-xs ${onlyMine ? "bg-white text-primary" : "bg-primary text-white"}`}>{myCount}</span>}
+        </button>
         <div className="relative flex-1">
           <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ابحث في التذاكر..." className="w-full border border-border rounded-lg pr-9 pl-4 py-2.5 text-sm" />
@@ -311,7 +369,7 @@ export default function Tickets() {
       </div>
 
       {showCreate && (
-        <CreateTicketModal users={users} onClose={() => setShowCreate(false)} onCreated={(t) => setTickets((prev) => [t, ...prev])} />
+        <CreateTicketModal users={users} entities={entities} onClose={() => setShowCreate(false)} onCreated={(t) => setTickets((prev) => [t, ...prev])} />
       )}
     </div>
   );

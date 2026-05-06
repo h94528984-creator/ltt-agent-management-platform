@@ -104,6 +104,11 @@ pnpm --filter @workspace/db run push            # Push DB schema to PostgreSQL
 
 ## Recent Changes
 
+- **Tickets — preset titles + auto-fill**: CreateTicketModal replaces free-text title with 5 fixed tiles (🔍 تفتيش/ ➕ وكيل جديد / 🏢 مركز خدمات / 🏪 نقطة بيع ثابتة / 🚐 سيارة بيع متنقلة). Selecting a preset shows linked-entity dropdown (filtered by entityType) which auto-fills locationName + lat/lng + agentId.
+- **Tickets — "تذاكري" filter**: toggle button on Tickets page filters by `assignedToId === currentUser`; shows count badge.
+- **Dashboard "تذاكر تعنيك" panel**: pinned card listing user's open assigned tickets, sorted by priority, with map links per row. Hidden when none.
+- **Entities edit**: new `PATCH /api/agent-request/:id` route allows editing entity fields. Entities page renamed modal `EntityModal` (handles create+edit), added Pencil "تعديل" button on each card.
+
 - **Entities page** (`/entities`, sidebar "كيانات الشركة"): manage company-owned entities (service_center / fixed_pos / mobile_van) — colored type cards with create-tile shortcuts, search/filter, approve/cancel actions, "افتح في الخرائط" button using `https://www.google.com/maps/dir/?api=1&destination=lat,lng`
 - **Tickets**: CreateTicketModal now has user-assignment dropdown (loads from `/users`), optional location (locationName + lat/lng + "use my GPS" button); ticket table shows assignee column + clickable maps badge
 - **Tickets schema**: added `locationName` (text), `latitude` / `longitude` (double precision); POST `/tickets` route accepts these alongside the OpenAPI `CreateTicketBody`

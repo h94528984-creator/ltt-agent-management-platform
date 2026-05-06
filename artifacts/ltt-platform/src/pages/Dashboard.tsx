@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { DashboardStats, AgentRankingItem, RiskDistributionItem, AgentRequest } from "@/lib/api";
 import { Link } from "wouter";
-import { Users, ClipboardCheck, AlertTriangle, TrendingUp, Star, Award, Eye, ShieldAlert, FileText, Clock } from "lucide-react";
+import { Users, ClipboardCheck, AlertTriangle, TrendingUp, Star, Award, Eye, ShieldAlert, FileText, Clock, Inbox, MapPin } from "lucide-react";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
@@ -36,12 +36,28 @@ function KpiCard({ icon: Icon, label, value, color }: { icon: React.ComponentTyp
   );
 }
 
+interface MyTicket {
+  id: number; title: string; description: string | null;
+  status: string; priority: string; category: string;
+  assignedToId: number | null; locationName: string | null;
+  latitude: number | null; longitude: number | null; createdAt: string;
+}
+
+const TICKET_PRIORITY_CLR: Record<string, string> = {
+  urgent: "bg-red-100 text-red-700", high: "bg-orange-100 text-orange-700",
+  medium: "bg-yellow-100 text-yellow-700", low: "bg-blue-100 text-blue-700",
+};
+
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [ranking, setRanking] = useState<AgentRankingItem[]>([]);
   const [risk, setRisk] = useState<RiskDistributionItem[]>([]);
   const [inspections, setInspections] = useState<AgentRequest[]>([]);
+  const [myTickets, setMyTickets] = useState<MyTicket[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const userRaw = typeof window !== "undefined" ? localStorage.getItem("ltt_user") : null;
+  const currentUserId = userRaw ? (JSON.parse(userRaw).id as number) : null;
 
   useEffect(() => {
     Promise.all([
@@ -49,13 +65,22 @@ export default function Dashboard() {
       api.get<AgentRankingItem[]>("/dashboard/agent-ranking"),
       api.get<RiskDistributionItem[]>("/dashboard/risk-distribution"),
       api.get<AgentRequest[]>("/agent-requests?limit=10"),
-    ]).then(([s, r, d, insp]) => {
+      api.get<MyTicket[]>("/tickets").catch(() => [] as MyTicket[]),
+    ]).then(([s, r, d, insp, tix]) => {
       setStats(s);
       setRanking(r);
       setRisk(d);
       setInspections(insp ?? []);
+      const mine = currentUserId
+        ? tix.filter((t) => t.assignedToId === currentUserId && t.status !== "closed" && t.status !== "resolved")
+        : [];
+      mine.sort((a, b) => {
+        const order: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
+        return (order[a.priority] ?? 9) - (order[b.priority] ?? 9);
+      });
+      setMyTickets(mine);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  }, [currentUserId]);
 
   if (loading) {
     return (
@@ -118,6 +143,41 @@ export default function Dashboard() {
           <KpiCard icon={Clock} label="قارب على الانتهاء" value={stats.documents?.expiringSoon ?? 0} color="bg-amber-500" />
           <KpiCard icon={ShieldAlert} label="مستندات منتهية" value={stats.documents?.expired ?? 0} color="bg-red-500" />
           <KpiCard icon={Award} label="وكلاء ذهبيون" value={stats.goldAgents} color="bg-amber-400" />
+        </div>
+      )}
+
+      {myTickets.length > 0 && (
+        <div className="bg-white rounded-xl border-2 border-primary/30 shadow-sm">
+          <div className="px-5 py-3.5 border-b border-border flex items-center justify-between bg-primary/5 rounded-t-xl">
+            <div className="flex items-center gap-2">
+              <Inbox size={18} className="text-primary" />
+              <h3 className="font-semibold text-foreground">تذاكر تعنيك</h3>
+              <span className="bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-full">{myTickets.length}</span>
+            </div>
+            <Link href="/tickets"><span className="text-primary text-sm hover:underline cursor-pointer">عرض الكل ←</span></Link>
+          </div>
+          <div className="divide-y divide-border max-h-80 overflow-y-auto">
+            {myTickets.slice(0, 6).map((t) => (
+              <div key={t.id} className="px-5 py-3 flex items-center justify-between gap-3 hover:bg-muted/30">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium text-foreground">{t.title}</p>
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${TICKET_PRIORITY_CLR[t.priority] ?? "bg-gray-100"}`}>
+                      {t.priority === "urgent" ? "عاجل" : t.priority === "high" ? "عالية" : t.priority === "medium" ? "متوسطة" : "منخفضة"}
+                    </span>
+                  </div>
+                  {t.description && <p className="text-xs text-muted-foreground mt-0.5 truncate">{t.description}</p>}
+                </div>
+                {t.latitude != null && t.longitude != null && (
+                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${t.latitude},${t.longitude}`} target="_blank" rel="noopener noreferrer"
+                     className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md text-xs font-medium shrink-0">
+                    <MapPin size={11} />
+                    {t.locationName ?? "الخرائط"}
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

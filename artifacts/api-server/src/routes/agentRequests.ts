@@ -384,6 +384,37 @@ router.patch("/agent-request/:id/status", async (req, res): Promise<void> => {
   }
 });
 
+// PATCH /api/agent-request/:id — edit entity fields
+router.patch("/agent-request/:id", async (req, res): Promise<void> => {
+  try {
+    const id = parseInt(req.params["id"] ?? "");
+    if (isNaN(id)) { res.status(400).json({ error: "معرف غير صالح" }); return; }
+    const b = req.body as Record<string, unknown>;
+    const upd: Record<string, unknown> = {};
+    const map: Record<string, string> = {
+      entityName: "agentName", responsibleEmployee: "representativeName", employeePhone: "mobile",
+      address: "fullAddress",
+    };
+    for (const [k, v] of Object.entries(b)) {
+      if (k === "id" || k === "requestId" || k === "status" || k === "createdAt") continue;
+      const col = map[k] ?? k;
+      upd[col] = v;
+    }
+    const { sql } = await import("drizzle-orm");
+    upd["updatedAt"] = sql`NOW()`;
+    const [updated] = await db
+      .update(agentRequestsTable)
+      .set(upd)
+      .where(eq(agentRequestsTable.id, id))
+      .returning();
+    if (!updated) { res.status(404).json({ error: "الطلب غير موجود" }); return; }
+    res.json(updated);
+  } catch (err) {
+    req.log.error({ err }, "Failed to update agent request");
+    res.status(500).json({ error: "حدث خطأ" });
+  }
+});
+
 // GET /api/agent-request/:requestId — public
 router.get("/agent-request/:requestId", async (req, res): Promise<void> => {
   const { requestId } = req.params;

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import type { AgentRequest } from "@/lib/api";
-import { Plus, X, MapPin, Building2, Store, Truck, Navigation, Search } from "lucide-react";
+import { Plus, X, MapPin, Building2, Store, Truck, Navigation, Search, Pencil } from "lucide-react";
 
 const ENTITY_TYPES = [
   { value: "service_center", label: "مركز خدمة",        icon: Building2, color: "bg-purple-100 text-purple-700 border-purple-200" },
@@ -25,21 +25,22 @@ function mapsUrl(lat: number, lng: number) {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
 
-function CreateEntityModal({ defaultType, onClose, onCreated }: { defaultType: string; onClose: () => void; onCreated: (r: AgentRequest) => void }) {
-  const [entityType, setEntityType] = useState(defaultType);
-  const [entityName, setEntityName] = useState("");
-  const [responsibleEmployee, setResponsibleEmployee] = useState("");
-  const [employeePhone, setEmployeePhone] = useState("");
-  const [city, setCity] = useState("");
-  const [address, setAddress] = useState("");
-  const [latitude, setLatitude] = useState("");
-  const [longitude, setLongitude] = useState("");
-  const [services, setServices] = useState<string[]>([]);
-  const [staffCount, setStaffCount] = useState("1");
-  const [internetQuality, setInternetQuality] = useState("good");
-  const [hasSignboard, setHasSignboard] = useState(true);
-  const [hasDevices, setHasDevices] = useState(true);
-  const [notes, setNotes] = useState("");
+function EntityModal({ defaultType, editing, onClose, onSaved }: { defaultType: string; editing: AgentRequest | null; onClose: () => void; onSaved: (r: AgentRequest, isNew: boolean) => void }) {
+  const isEdit = editing != null;
+  const [entityType, setEntityType] = useState(editing?.entityType ?? defaultType);
+  const [entityName, setEntityName] = useState(editing?.agentName ?? "");
+  const [responsibleEmployee, setResponsibleEmployee] = useState(editing?.representativeName ?? "");
+  const [employeePhone, setEmployeePhone] = useState(editing?.mobile ?? "");
+  const [city, setCity] = useState(editing?.city ?? "");
+  const [address, setAddress] = useState(editing?.fullAddress ?? "");
+  const [latitude, setLatitude] = useState(editing?.latitude != null ? String(editing.latitude) : "");
+  const [longitude, setLongitude] = useState(editing?.longitude != null ? String(editing.longitude) : "");
+  const [services, setServices] = useState<string[]>(Array.isArray(editing?.services) ? (editing!.services as string[]) : []);
+  const [staffCount, setStaffCount] = useState(editing?.staffCount != null ? String(editing.staffCount) : "1");
+  const [internetQuality, setInternetQuality] = useState(editing?.internetQuality ?? "good");
+  const [hasSignboard, setHasSignboard] = useState(editing?.hasSignboard ?? true);
+  const [hasDevices, setHasDevices] = useState(editing?.hasDevices ?? true);
+  const [notes, setNotes] = useState(editing?.notes ?? "");
   const [gpsLoading, setGpsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +66,7 @@ function CreateEntityModal({ defaultType, onClose, onCreated }: { defaultType: s
     }
     setSaving(true); setError(null);
     try {
-      const created = await api.post<AgentRequest>("/agent-requests", {
+      const payload = {
         entityType, entityName: entityName.trim(),
         responsibleEmployee: responsibleEmployee.trim(),
         employeePhone: employeePhone.trim(),
@@ -76,8 +77,11 @@ function CreateEntityModal({ defaultType, onClose, onCreated }: { defaultType: s
         hasSignboard, hasDevices, internetQuality,
         staffCount: parseInt(staffCount || "1") || 1,
         services, notes: notes.trim() || null,
-      });
-      onCreated(created); onClose();
+      };
+      const saved = isEdit
+        ? await api.patch<AgentRequest>(`/agent-request/${editing!.id}`, payload)
+        : await api.post<AgentRequest>("/agent-requests", payload);
+      onSaved(saved, !isEdit); onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "حدث خطأ");
     } finally { setSaving(false); }
@@ -87,7 +91,7 @@ function CreateEntityModal({ defaultType, onClose, onCreated }: { defaultType: s
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
       <form className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl my-4" onClick={(e) => e.stopPropagation()} onSubmit={submit}>
         <div className="border-b border-border px-6 py-4 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
-          <h2 className="font-bold">إنشاء كيان جديد للشركة</h2>
+          <h2 className="font-bold">{isEdit ? "تعديل كيان" : "إنشاء كيان جديد للشركة"}</h2>
           <button type="button" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="p-6 space-y-4">
@@ -184,7 +188,7 @@ function CreateEntityModal({ defaultType, onClose, onCreated }: { defaultType: s
         <div className="border-t border-border px-6 py-3 flex justify-end gap-2 sticky bottom-0 bg-white rounded-b-2xl">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-muted">إلغاء</button>
           <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50">
-            {saving ? "جاري الحفظ..." : "إنشاء الكيان"}
+            {saving ? "جاري الحفظ..." : isEdit ? "حفظ التعديلات" : "إنشاء الكيان"}
           </button>
         </div>
       </form>
@@ -197,8 +201,12 @@ export default function Entities() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
-  const [showCreate, setShowCreate] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState<AgentRequest | null>(null);
   const [createDefaultType, setCreateDefaultType] = useState("service_center");
+
+  function openCreate(t: string) { setEditing(null); setCreateDefaultType(t); setShowModal(true); }
+  function openEdit(e: AgentRequest) { setEditing(e); setShowModal(true); }
 
   const load = useCallback(() => {
     setLoading(true);
@@ -253,7 +261,7 @@ export default function Entities() {
           <h1 className="text-2xl font-bold text-foreground">كيانات الشركة</h1>
           <p className="text-muted-foreground text-sm mt-1">إدارة مراكز الخدمة، نقاط البيع الثابتة، وسيارات البيع المتنقلة</p>
         </div>
-        <button onClick={() => { setCreateDefaultType("service_center"); setShowCreate(true); }}
+        <button onClick={() => openCreate("service_center")}
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors">
           <Plus size={15} />
           إنشاء كيان جديد
@@ -262,7 +270,7 @@ export default function Entities() {
 
       <div className="grid grid-cols-3 gap-4">
         {counts.map((c) => (
-          <button key={c.value} onClick={() => { setCreateDefaultType(c.value); setShowCreate(true); }}
+          <button key={c.value} onClick={() => openCreate(c.value)}
             className={`border-2 rounded-xl p-4 text-right transition-all hover:shadow-md ${c.color}`}>
             <div className="flex items-center justify-between">
               <div>
@@ -337,6 +345,10 @@ export default function Entities() {
                     افتح في الخرائط
                   </a>
                 )}
+                <button onClick={() => openEdit(e)} className="inline-flex items-center gap-1 px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground rounded-md text-xs font-medium">
+                  <Pencil size={11} />
+                  تعديل
+                </button>
                 {e.status === "pending" && (
                   <button onClick={() => approveEntity(e.id)} className="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-md text-xs font-medium">
                     اعتماد
@@ -353,8 +365,15 @@ export default function Entities() {
         })}
       </div>
 
-      {showCreate && (
-        <CreateEntityModal defaultType={createDefaultType} onClose={() => setShowCreate(false)} onCreated={(r) => setEntities((prev) => [r, ...prev])} />
+      {showModal && (
+        <EntityModal
+          defaultType={createDefaultType}
+          editing={editing}
+          onClose={() => setShowModal(false)}
+          onSaved={(r, isNew) => {
+            setEntities((prev) => isNew ? [r, ...prev] : prev.map((x) => x.id === r.id ? r : x));
+          }}
+        />
       )}
     </div>
   );
