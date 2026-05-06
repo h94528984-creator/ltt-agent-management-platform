@@ -406,10 +406,6 @@ export default function AgentRequestForm() {
                       <option value="false">الأجهزة غير متوفرة</option>
                     </select>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <input className="w-full rounded-xl border border-gray-200 p-3" value={form.fullAddress} onChange={(e) => setForm({ ...form, fullAddress: e.target.value })} placeholder="العنوان الكامل" />
-                    <input className="w-full rounded-xl border border-gray-200 p-3" value={form.locationDescription} onChange={(e) => setForm({ ...form, locationDescription: e.target.value })} placeholder="وصف القناة / الفرع" />
-                  </div>
                   <div className="grid gap-3 md:grid-cols-2">
                     {SERVICES_AVAILABLE.map((s) => (
                       <label key={s.value} className="flex items-center gap-2 rounded-xl border border-gray-200 p-3">
