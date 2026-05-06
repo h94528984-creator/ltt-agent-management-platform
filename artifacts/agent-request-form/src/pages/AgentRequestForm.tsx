@@ -358,37 +358,56 @@ export default function AgentRequestForm() {
               />
             </div>
 
-            {isDealerChannel ? (
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
-                <h2 className="font-semibold text-gray-900">بيانات الوكيل</h2>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <input className="w-full rounded-xl border border-gray-200 p-3" value={form.agentName} onChange={(e) => setForm({ ...form, agentName: e.target.value })} placeholder="اسم الوكيل" />
-                  <input className="w-full rounded-xl border border-gray-200 p-3" value={form.agentEmail} onChange={(e) => setForm({ ...form, agentEmail: e.target.value })} placeholder="بريد الوكيل" />
-                  <input className="w-full rounded-xl border border-gray-200 p-3" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder="الهاتف" />
-                  <input className="w-full rounded-xl border border-gray-200 p-3" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="مكان الوكيل / المدينة" />
-                  <input className="w-full rounded-xl border border-gray-200 p-3 md:col-span-2" value={form.fullAddress} onChange={(e) => setForm({ ...form, fullAddress: e.target.value })} placeholder="العنوان الكامل" />
-                </div>
-                <p className="text-xs text-gray-500">عند اختيار وكيل رئيسي أو فرعي تظهر بيانات الوكيل هنا ويمكن تعديلها مباشرة.</p>
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.agentName} onChange={(e) => setForm({ ...form, agentName: e.target.value })} placeholder="اسم الوكيل" />
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.agentEmail} onChange={(e) => setForm({ ...form, agentEmail: e.target.value })} placeholder="بريد الوكيل" />
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder="الهاتف" />
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="مكان الوكيل / المدينة" />
+                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.activityType} onChange={(e) => setForm({ ...form, activityType: e.target.value })}>
+                  {ACTIVITY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
               </div>
-            ) : (
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
-                <h2 className="font-semibold text-gray-900">القناة والخدمات</h2>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
+              <h2 className="font-semibold text-gray-900">{isDealerChannel ? "التراخيص والجاهزية" : "القناة والخدمات"}</h2>
+              {isDealerChannel ? (
                 <div className="grid gap-4 md:grid-cols-2">
-                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.activityType} onChange={(e) => setForm({ ...form, activityType: e.target.value })}>
-                    {ACTIVITY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.documentsComplete} onChange={(e) => setForm({ ...form, documentsComplete: e.target.value })}>
+                    <option value="true">الوثائق مكتملة</option>
+                    <option value="false">الوثائق ناقصة</option>
                   </select>
-                  <input className="w-full rounded-xl border border-gray-200 p-3" value={form.locationDescription} onChange={(e) => setForm({ ...form, locationDescription: e.target.value })} placeholder="وصف القناة / الفرع" />
+                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.brandIdentityCompliant} onChange={(e) => setForm({ ...form, brandIdentityCompliant: e.target.value })}>
+                    <option value="true">الهوية التجارية متوافقة</option>
+                    <option value="false">الهوية التجارية غير متوافقة</option>
+                  </select>
+                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasSignboard} onChange={(e) => setForm({ ...form, hasSignboard: e.target.value })}>
+                    <option value="true">يوجد لافتة</option>
+                    <option value="false">لا توجد لافتة</option>
+                  </select>
+                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasDevices} onChange={(e) => setForm({ ...form, hasDevices: e.target.value })}>
+                    <option value="true">الأجهزة متوفرة</option>
+                    <option value="false">الأجهزة غير متوفرة</option>
+                  </select>
                 </div>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {SERVICES_AVAILABLE.map((s) => (
-                    <label key={s.value} className="flex items-center gap-2 rounded-xl border border-gray-200 p-3">
-                      <input type="checkbox" checked={form.services.includes(s.value)} onChange={() => toggleService(s.value)} />
-                      <span>{s.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
+              ) : (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <input className="w-full rounded-xl border border-gray-200 p-3" value={form.fullAddress} onChange={(e) => setForm({ ...form, fullAddress: e.target.value })} placeholder="العنوان الكامل" />
+                    <input className="w-full rounded-xl border border-gray-200 p-3" value={form.locationDescription} onChange={(e) => setForm({ ...form, locationDescription: e.target.value })} placeholder="وصف القناة / الفرع" />
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {SERVICES_AVAILABLE.map((s) => (
+                      <label key={s.value} className="flex items-center gap-2 rounded-xl border border-gray-200 p-3">
+                        <input type="checkbox" checked={form.services.includes(s.value)} onChange={() => toggleService(s.value)} />
+                        <span>{s.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
 
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
               <h2 className="font-semibold text-gray-900 mb-3">إرسال/تصدير</h2>
