@@ -539,9 +539,6 @@ importers:
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.90.21(react@19.1.0)
-      '@types/leaflet':
-        specifier: ^1.9.21
-        version: 1.9.21
       '@types/node':
         specifier: 'catalog:'
         version: 25.3.5
@@ -578,12 +575,6 @@ importers:
       input-otp:
         specifier: ^1.4.2
         version: 1.4.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      jspdf:
-        specifier: ^4.2.1
-        version: 4.2.1
-      leaflet:
-        specifier: ^1.9.4
-        version: 1.9.4
       lucide-react:
         specifier: 'catalog:'
         version: 0.545.0(react@19.1.0)
@@ -605,9 +596,6 @@ importers:
       react-icons:
         specifier: ^5.4.0
         version: 5.6.0(react@19.1.0)
-      react-leaflet:
-        specifier: ^5.0.0
-        version: 5.0.0(leaflet@1.9.4)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       react-resizable-panels:
         specifier: ^2.1.7
         version: 2.1.9(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -635,9 +623,6 @@ importers:
       wouter:
         specifier: ^3.3.5
         version: 3.9.0(react@19.1.0)
-      xlsx:
-        specifier: ^0.18.5
-        version: 0.18.5
       zod:
         specifier: 'catalog:'
         version: 3.25.76

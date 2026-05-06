@@ -603,18 +603,19 @@ export default function AgentRequestForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50" dir="rtl" style={{ fontFamily: "'Cairo', sans-serif" }}>
-      <header className="bg-[hsl(220,55%,18%)] text-white py-5 px-4 shadow-lg">
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
-          <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
-            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <header className="bg-[hsl(220,55%,18%)] text-white shadow-lg">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-4">
+          <img src="/form/ltt-logo.png" alt="LTT Logo" className="h-14 w-auto flex-shrink-0 drop-shadow-lg" />
+          <div className="flex-1 min-w-0">
+            <img src="/form/ltt-tagline.png" alt="Libya Telecom & Technology" className="h-5 w-auto mb-1 opacity-90" />
+            <h1 className="text-lg font-black leading-tight">نموذج تقييم الوكلاء — الجولات التفتيشية</h1>
+            <div className="text-xs text-blue-200 mt-0.5">المنطقة الغربية — قسم المبيعات بالتجزئة</div>
+          </div>
+          <div className="flex-shrink-0 w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
             </svg>
-          </div>
-          <div>
-            <div className="text-xs text-orange-300 font-semibold">Libya Telecom & Technology</div>
-            <h1 className="text-xl font-black">نموذج تقييم الوكلاء — الجولات التفتيشية</h1>
-            <div className="text-xs text-blue-200">المنطقة الغربية — قسم المبيعات بالتجزئة</div>
           </div>
         </div>
       </header>

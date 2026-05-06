@@ -12,6 +12,7 @@ pnpm workspace monorepo using TypeScript, React+Vite frontend, Express 5 API ser
 |---|---|---|---|
 | `ltt-platform` | web (React+Vite) | `/` | 20147 |
 | `api-server` | api (Express 5) | `/api` | 8080 |
+| `agent-request-form` | web (React+Vite) | `/form/` | 5173 |
 
 ## Stack
 
@@ -20,66 +21,70 @@ pnpm workspace monorepo using TypeScript, React+Vite frontend, Express 5 API ser
 - **Frontend**: React 19, Vite, Tailwind CSS v4, shadcn/ui, wouter router, TanStack Query
 - **Backend**: Express 5, Drizzle ORM, PostgreSQL
 - **API contract**: OpenAPI spec → Orval codegen (React Query hooks + Zod schemas)
-- **Auth**: Custom HMAC token (SESSION_SECRET), stored in localStorage
+- **Auth**: Custom HMAC token (SESSION_SECRET), stored in localStorage as `ltt_token`
+- **Font**: Cairo (Arabic) loaded via HTML link tag (NOT CSS @import — breaks Tailwind v4)
 
 ## Platform Modules
 
-1. **Dashboard** — KPI summary cards, agent ranking, risk distribution, recent activity
-2. **Agent Management** — CRUD with search/filter by status/type, bulk import
-3. **Inspection Reports** — Field visit logs, violations tracking, compliance scoring
-4. **Sales Logs** — Observed vs reported sales comparison, compliance flag (OK/Suspicious/Violation)
-5. **Ticket System** — Issue tracking with categories, priority, status workflow
-6. **Inventory Management** — Stock levels, low-stock alerts, in/out movements
-7. **Agent Scoring** — 4-component scoring engine (compliance 30%, sales accuracy 25%, sales performance 25%, activity 20%)
-8. **User Management** — 9 roles, CRUD, bulk import with default password LTT@2024
+### Management Platform (`/`)
+1. **Login** — Email + password (default: `LTT@2024`)
+2. **Dashboard** — KPI cards, risk distribution pie chart, agent ranking bar chart, recent inspections
+3. **Inspections** — Field inspection reports from `/api/agent-requests`, status workflow (pending→approved/rejected)
+4. **Agents** — Agent cards with score/classification badges, detail modal with scoring breakdown
+5. **Analytics** — Multi-chart analytics: city breakdown, risk pie, radar chart, sales comparison
+6. **Tickets** — Ticket list with priority/status badges
+7. **Inventory** — Stock levels with low-stock alerts
+8. **Users** — Team member cards with role badges
+
+### Field Inspection Form (`/form/`)
+- Arabic RTL inspection form with 190 agents loaded from CSV
+- GPS geolocation, photo uploads, scoring sections
+- LTT logo + tagline in header
 
 ## Roles (9 total)
 
 `head_of_unit`, `indirect_sales`, `agent_affairs`, `inspection_team`, `technical_support`, `airport_team`, `centers_support`, `admin`, `viewer`
 
-## Agent Classification
-
-- **Gold** ≥ 85 — High performer, priority inventory, incentive eligible
-- **Silver** 70–84 — Good performance, continuous monitoring
-- **Watchlist** 50–69 — Needs retraining and extra inspections
-- **High Risk** < 50 — Formal warning or temporary suspension
-
 ## Key Packages
 
 | Package | Purpose |
 |---|---|
-| `@workspace/db` | Drizzle ORM schema + DB client (composite lib) |
+| `@workspace/db` | Drizzle ORM schema + DB client |
 | `@workspace/api-spec` | OpenAPI spec + Orval config |
 | `@workspace/api-zod` | Zod schemas generated from OpenAPI |
 | `@workspace/api-client-react` | React Query hooks generated from OpenAPI |
-| `@workspace/ltt-platform` | React+Vite frontend |
+| `@workspace/ltt-platform` | React+Vite management dashboard |
 | `@workspace/api-server` | Express 5 API server |
+| `@workspace/agent-request-form` | React+Vite field inspection form |
 
 ## Key Commands
 
 ```bash
-pnpm run typecheck:libs           # Build composite libs (db, etc.)
-pnpm run typecheck                # Full TS check across all packages
+pnpm run typecheck:libs           # Build composite libs
+pnpm run typecheck                # Full TS check
 pnpm --filter @workspace/api-spec run codegen   # Regenerate hooks from OpenAPI
 pnpm --filter @workspace/db run push            # Push DB schema to PostgreSQL
 ```
 
 ## Important Notes
 
-- **Lib build order**: `typecheck:libs` must run before `typecheck` to emit declarations from `lib/db`, `lib/api-zod`, `lib/api-client-react`
-- **Auth tokens**: Stored in `localStorage` as `ltt_token`; custom-fetch reads via `setAuthTokenGetter`
+- **CSS @import**: In Tailwind v4, Google Fonts must be in `index.html` `<link>` tag — NOT `@import url()` in CSS (breaks PostCSS)
+- **tw-animate-css**: Do NOT `@import "tw-animate-css"` in Tailwind v4 CSS — incompatible, causes 500 errors
+- **Vite base path**: Must use `base: basePath` (not `isDev ? "/" : basePath`) — Replit proxy does NOT rewrite paths
+- **Auth tokens**: Stored in `localStorage` as `ltt_token`; user object stored as `ltt_user`
 - **Default password**: `LTT@2024` for all seeded users
+- **DB column**: Users table uses `fullName` (not `name`)
+- **Agent requests list route**: `GET /api/agent-requests` (plural), status update: `PATCH /api/agent-request/:id/status`
 - **Tickets**: Uses `createdById` (not `reportedById`) as FK column
-- **OpenAPI title**: Must remain `"Api"` — controls generated filenames
 
 ## DB Schema Tables
 
-`users`, `agents`, `inspections`, `sales_logs`, `tickets`, `inventory`, `agent_scores`, `notifications`
+`users`, `agents`, `inspections`, `sales_logs`, `tickets`, `inventory`, `agent_scores`, `notifications`, `agent_requests`
 
 ## Seeded Data
 
 - **19 users** (real LTT team members) with default password `LTT@2024`
-- **12 agents** across Tripoli region (dealers, centers, sub-agents, mobile sellers)
+- **12 agents** across Tripoli region
 - **10 inventory items** (SIM cards, recharge cards, devices, FTTH equipment)
 - **7 tickets** covering technical, compliance, billing, and stock issues
-- **Agent scores** with realistic Gold/Silver/Watchlist/High_Risk classifications
+- **Agent scores** with Gold/Silver/Watchlist/High_Risk classifications

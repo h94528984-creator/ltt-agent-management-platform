@@ -26,18 +26,14 @@ if (!basePath) {
   );
 }
 
-const isDev = process.env.NODE_ENV !== "production";
-
 export default defineConfig({
-  // The reverse proxy forwards the full /form/* path to this Vite server.
-  // Vite must use basePath in both dev and prod so all asset URLs
-  // (/@vite/client, /form/src/main.tsx, etc.) are routed correctly through the proxy.
   base: basePath,
   plugins: [
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
-    ...(isDev && process.env.REPL_ID !== undefined
+    ...(process.env.NODE_ENV !== "production" &&
+    process.env.REPL_ID !== undefined
       ? [
           await import("@replit/vite-plugin-cartographer").then((m) =>
             m.cartographer({
