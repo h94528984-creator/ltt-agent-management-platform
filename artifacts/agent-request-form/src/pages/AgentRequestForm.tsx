@@ -4,10 +4,41 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { AGENTS, type AgentEntry } from "../data/agentsList";
+import type { AgentEntry } from "../data/agentsList";
 
 export type ServiceCenterEntry = { id: number; name: string; lat: number; lng: number; address: string };
 export type FixedPosEntry = { id: number; name: string; lat: number; lng: number; address: string };
+
+function useAgents(): AgentEntry[] {
+  const [items, setItems] = useState<AgentEntry[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_BASE}/agents`)
+      .then(r => r.ok ? r.json() : [])
+      .then((rows: Array<{ id: number; name: string; city: string | null; address: string | null; phone: string | null; email: string | null; latitude: number | null; longitude: number | null }>) => {
+        if (cancelled) return;
+        const seen = new Set<string>();
+        const norm = (s: string) => s.replace(/\s+/g, " ").trim();
+        const deduped: AgentEntry[] = [];
+        for (const r of rows) {
+          const key = norm(r.name).toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          deduped.push({
+            id: r.id, name: r.name, city: r.city ?? "", address: r.address ?? "",
+            phone: r.phone ?? "", email: r.email ?? "",
+            lat: r.latitude != null ? Number(r.latitude) : null,
+            lng: r.longitude != null ? Number(r.longitude) : null,
+          });
+        }
+        deduped.sort((a, b) => a.name.localeCompare(b.name, "ar"));
+        setItems(deduped);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  return items;
+}
 
 function useEntityList(entityType: "service_center" | "fixed_pos" | "mobile_van") {
   const [items, setItems] = useState<ServiceCenterEntry[]>([]);
@@ -229,11 +260,11 @@ function PhotoUploadSection({ cat, files, previews, onAdd, onRemove }: {
   );
 }
 
-function AgentSelector({ selected, onSelect }: { selected: AgentEntry | null; onSelect: (a: AgentEntry) => void }) {
+function AgentSelector({ selected, onSelect, agents }: { selected: AgentEntry | null; onSelect: (a: AgentEntry) => void; agents: AgentEntry[] }) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const filtered = search.trim().length < 1 ? AGENTS : AGENTS.filter(a => a.name.includes(search) || a.city.includes(search) || a.phone.includes(search) || String(a.id).includes(search));
+  const filtered = search.trim().length < 1 ? agents : agents.filter(a => a.name.includes(search) || a.city.includes(search) || a.phone.includes(search) || String(a.id).includes(search));
   useEffect(() => {
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener("mousedown", h);
@@ -580,12 +611,16 @@ function CompanyEntityForm({
 
 export default function AgentRequestForm() {
   const [mode, setMode] = useState<Mode>("inspection");
-  const [selectedAgent, setSelectedAgent] = useState<AgentEntry | null>(AGENTS[0] ?? null);
+  const agents = useAgents();
+  const [selectedAgent, setSelectedAgent] = useState<AgentEntry | null>(null);
+  useEffect(() => {
+    if (!selectedAgent && agents.length > 0) setSelectedAgent(agents[0]);
+  }, [agents, selectedAgent]);
   const [form, setForm] = useState<InspectionFormData>({
-    agentName: AGENTS[0]?.name ?? "", agentEmail: AGENTS[0]?.email ?? "", city: AGENTS[0]?.city ?? "",
-    fullAddress: AGENTS[0]?.address ?? "", mobile: AGENTS[0]?.phone ?? "", landline: "",
-    activityType: ACTIVITY_TYPES[0]?.value ?? "", latitude: AGENTS[0]?.lat?.toString() ?? "",
-    longitude: AGENTS[0]?.lng?.toString() ?? "", locationDescription: "",
+    agentName: "", agentEmail: "", city: "",
+    fullAddress: "", mobile: "", landline: "",
+    activityType: ACTIVITY_TYPES[0]?.value ?? "", latitude: "",
+    longitude: "", locationDescription: "",
     hasSignboard: "true", hasDevices: "true", internetQuality: "good", staffReadiness: "3",
     areaTraffic: "medium", marketDensitySameCity: "0", marketDensitySameStreet: "0",
     transactionVolumeAdsl: "0", transactionVolume4g: "0",
@@ -731,7 +766,7 @@ export default function AgentRequestForm() {
             <div className="space-y-4">
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">اختر الوكيل</label>
-                <AgentSelector selected={selectedAgent} onSelect={a => setSelectedAgent(a)} />
+                <AgentSelector selected={selectedAgent} onSelect={a => setSelectedAgent(a)} agents={agents} />
               </div>
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
                 <div className="grid gap-4 md:grid-cols-2">

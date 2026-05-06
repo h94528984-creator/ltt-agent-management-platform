@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import type { AgentRequest } from "@/lib/api";
+import { getUser } from "@/lib/auth";
 import { Plus, X, MapPin, Building2, Store, Truck, Navigation, Search, Pencil } from "lucide-react";
 
 const ENTITY_TYPES = [
@@ -354,7 +355,7 @@ export default function Entities() {
                     اعتماد
                   </button>
                 )}
-                {e.status !== "cancelled" && (
+                {e.status !== "cancelled" && getUser()?.role === "admin" && (
                   <button onClick={() => cancelEntity(e.id)} className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-md text-xs font-medium">
                     إلغاء
                   </button>

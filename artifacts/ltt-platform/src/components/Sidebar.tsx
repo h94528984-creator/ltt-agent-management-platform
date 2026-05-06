@@ -4,7 +4,7 @@ import { clearAuth, getUser } from "@/lib/auth";
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "لوحة التحكم" },
-  { href: "/inspections", icon: ClipboardList, label: "تقارير التفتيش" },
+  { href: "/inspections", icon: ClipboardList, label: "تقارير التفتيش", adminOnly: true },
   { href: "/agents", icon: Users, label: "إدارة الوكلاء" },
   { href: "/entities", icon: Building2, label: "كيانات الشركة" },
   { href: "/documents", icon: FileText, label: "التراخيص والمستندات" },
@@ -45,9 +45,11 @@ export default function Sidebar({ onLogout }: SidebarProps) {
       </div>
 
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
-          <NavItem key={item.href} {...item} />
-        ))}
+        {navItems
+          .filter((item) => !item.adminOnly || user?.role === "admin")
+          .map((item) => (
+            <NavItem key={item.href} href={item.href} icon={item.icon} label={item.label} />
+          ))}
       </nav>
 
       <div className="p-4 border-t border-sidebar-border">

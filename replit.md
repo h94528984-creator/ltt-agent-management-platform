@@ -104,6 +104,12 @@ pnpm --filter @workspace/db run push            # Push DB schema to PostgreSQL
 
 ## Recent Changes
 
+- **Admin role gating**: Admin user `admin@ltt.ly` (pwd `LTT@2024`, role=`admin`) created. Delete buttons in `Agents.tsx` and `Entities.tsx` (cancel) only render when `getUser()?.role === "admin"`. Inspections page (`/inspections`) hidden from sidebar and route is unmounted for non-admin users.
+- **Login popup for assigned tickets**: After login, `App.tsx` fetches `/api/tickets?assignedTo={userId}`, filters open tickets, and shows `AssignedTicketsPopup` modal with priority badges + link to /tickets. Skipped silently if none.
+- **Form ↔ DB agent sync**: `agent-request-form` no longer uses static `agentsList.ts`. New `useAgents()` hook in `AgentRequestForm.tsx` fetches `/api/agents`, dedupes by normalized name, sorts Arabic-locale, passes to `<AgentSelector agents={...}/>`. Default selectedAgent set via effect once list arrives.
+- **DB dedup + sync**: Agents table deduped by normalized name (re-pointed `agent_requests.agent_id` first). Then merged 190 entries from `agentsList.ts` (filling empty city/address/phone/email/lat/lng only — never overwriting). Final count: 393.
+
+
 - **Interactive Map page** (`/map`, replaces "المخزون" in sidebar): Leaflet map showing all agents (190) + company entities (service_center / fixed_pos / mobile_van) with color-coded markers, type filters with counts, popups with contact info + Google Maps link, and CSV export of filtered points (`pages/MapView.tsx`).
 - **Ticket map picker**: Reusable `MapPickerModal` (Leaflet) lets admin click on map to set ticket lat/lng. Wired into `Tickets.tsx` alongside the existing GPS button. Leaflet CSS loaded in `main.tsx`.
 - **Form ↔ Entities sync**: Inspection form's ServiceCenterSelector / FixedPosSelector now fetch from `/api/agent-requests?entityType=...` (via `useEntityList` hook in `AgentRequestForm.tsx`) instead of hardcoded files. Static `serviceCenters.ts` / `fixedPosList.ts` deleted; their content seeded into `agent_requests` (status=approved, request_id `LTT-SC-00X` / `LTT-FP-001`). Adding/editing/cancelling a company entity in the management Entities page is now reflected immediately in the field form.

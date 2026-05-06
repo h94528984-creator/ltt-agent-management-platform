@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { api } from "@/lib/api";
 import type { AgentRequest, AgentDocStatus } from "@/lib/api";
+import { getUser } from "@/lib/auth";
 import { exportCsv } from "@/lib/exportCsv";
 import { Search, ChevronDown, MapPin, Phone, Mail, Star, Plus, Pencil, Trash2, Download, Eye, FileText, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
@@ -221,7 +222,9 @@ export default function Agents() {
           return <div key={agent.id} className="bg-white border border-border rounded-xl p-5 shadow-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all relative group" onClick={() => setSelected(agent)}>
             <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
               <button onClick={(e) => { e.stopPropagation(); setEditing(agent); }} className="p-1.5 bg-white border border-border rounded hover:bg-muted" title="تعديل"><Pencil size={12} /></button>
-              <button onClick={(e) => { e.stopPropagation(); handleDelete(agent); }} className="p-1.5 bg-white border border-border rounded hover:bg-red-50 hover:border-red-200" title="حذف"><Trash2 size={12} className="text-red-600" /></button>
+              {getUser()?.role === "admin" && (
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(agent); }} className="p-1.5 bg-white border border-border rounded hover:bg-red-50 hover:border-red-200" title="حذف"><Trash2 size={12} className="text-red-600" /></button>
+              )}
             </div>
             <div className="flex items-start justify-between mb-3 pr-12">
               <div className="flex-1 min-w-0">
