@@ -55,10 +55,12 @@ export default function Documents() {
     Promise.all([
       api.get<Document[]>("/documents"),
       api.get<AgentLite[]>("/agents"),
-      api.post("/documents/refresh-status", {}).catch(() => null),
     ]).then(([docs, ags]) => {
       setDocuments(docs ?? []);
       setAgents(ags ?? []);
+    }).catch(() => {
+      setDocuments([]);
+      setAgents([]);
     }).finally(() => setLoading(false));
   }, []);
 
