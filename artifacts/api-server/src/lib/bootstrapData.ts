@@ -37,11 +37,16 @@ export async function bootstrapDataIfEmpty(): Promise<void> {
       "Database is empty — bootstrapping from embedded snapshot (production seed)",
     );
 
+    const cleanedSql = (seedSql as string)
+      .split("\n")
+      .filter((line) => !line.startsWith("\\"))
+      .join("\n");
+
     await client.query("BEGIN");
     for (const t of TABLES) {
       await client.query(`TRUNCATE TABLE ${t} RESTART IDENTITY CASCADE`);
     }
-    await client.query(seedSql as string);
+    await client.query(cleanedSql);
     await client.query("COMMIT");
 
     const after = await client.query<{
