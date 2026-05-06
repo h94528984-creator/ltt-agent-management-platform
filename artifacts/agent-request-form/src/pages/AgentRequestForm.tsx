@@ -20,11 +20,14 @@ const CLASS_OPTIONS = [
 ];
 
 const ACTIVITY_TYPES = [
-  { value: "agent_main", label: "وكيل - الفئة (أ)" },
-  { value: "agent_sub", label: "وكيل - الفئة (ب)" },
-  { value: "agent_c", label: "وكيل - الفئة (ج)" },
-  { value: "agent_d", label: "وكيل - الفئة (د)" },
-  { value: "agent_e", label: "وكيل - الفئة (هـ)" },
+  { value: "agent_main", label: "وكيل - الفئة (أ)", isCompanyEntity: false },
+  { value: "agent_sub", label: "وكيل - الفئة (ب)", isCompanyEntity: false },
+  { value: "agent_c", label: "وكيل - الفئة (ج)", isCompanyEntity: false },
+  { value: "agent_d", label: "وكيل - الفئة (د)", isCompanyEntity: false },
+  { value: "agent_e", label: "وكيل - الفئة (هـ)", isCompanyEntity: false },
+  { value: "service_center", label: "مركز خدمات (موظفو الشركة)", isCompanyEntity: true },
+  { value: "fixed_pos", label: "نقطة بيع ثابتة (موظفو الشركة)", isCompanyEntity: true },
+  { value: "mobile_van", label: "سيارة بيع وخدمات متنقلة (موظفو الشركة)", isCompanyEntity: true },
 ];
 
 const SERVICES_AVAILABLE = [
