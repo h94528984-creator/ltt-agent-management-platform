@@ -145,6 +145,16 @@ function getServiceScore(services: string[]) {
   return Math.min(100, score);
 }
 
+const SERVICE_OPTIONS = [
+  { value: "4G", label: "4G" },
+  { value: "FWA", label: "FWA" },
+  { value: "ADSL", label: "ADSL" },
+  { value: "FTTH", label: "FTTH" },
+  { value: "eSIM", label: "eSIM" },
+  { value: "FIXD_VOLTE", label: "FIXD VoLTE" },
+  { value: "RECHARGE", label: "Recharge" },
+];
+
 function ScoreBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="space-y-1">
@@ -342,6 +352,12 @@ export default function AgentRequestForm() {
     }));
   }, []);
 
+  useEffect(() => {
+    if (form.hasDevices !== "true" && form.services.length > 0) {
+      setForm((prev) => ({ ...prev, services: [] }));
+    }
+  }, [form.hasDevices, form.services.length]);
+
   const handleRemovePhoto = useCallback((key: PhotoCatKey, index: number) => {
     setPhotos((prev) => {
       const next = prev[key].filter((_, i) => i !== index);
@@ -409,7 +425,7 @@ export default function AgentRequestForm() {
                   <div className="grid gap-3 md:grid-cols-2">
                     {SERVICES_AVAILABLE.map((s) => (
                       <label key={s.value} className="flex items-center gap-2 rounded-xl border border-gray-200 p-3">
-                        <input type="checkbox" checked={form.services.includes(s.value)} onChange={() => toggleService(s.value)} />
+                        <input type="checkbox" checked={form.services.includes(s.value)} disabled={form.hasDevices !== "true"} onChange={() => toggleService(s.value)} />
                         <span>{s.label}</span>
                       </label>
                     ))}
