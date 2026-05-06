@@ -6,6 +6,7 @@ import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { AGENTS, type AgentEntry } from "../data/agentsList";
 import { SERVICE_CENTERS, type ServiceCenterEntry } from "../data/serviceCenters";
+import { FIXED_POS_LIST, type FixedPosEntry } from "../data/fixedPosList";
 
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, shadowUrl: markerShadow });
@@ -297,6 +298,46 @@ function ServiceCenterSelector({ selected, onSelect }: { selected: ServiceCenter
   );
 }
 
+function FixedPosSelector({ selected, onSelect }: { selected: FixedPosEntry | null; onSelect: (p: FixedPosEntry) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen(o => !o)}
+        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-right flex items-center justify-between hover:border-indigo-400 transition-colors focus:outline-none focus:border-indigo-500 bg-white">
+        {selected ? (
+          <div className="text-right">
+            <div className="font-bold text-gray-900 text-sm">{selected.name}</div>
+            <div className="text-xs text-green-600 mt-0.5">✓ إحداثيات متوفرة — {selected.lat.toFixed(4)}, {selected.lng.toFixed(4)}</div>
+          </div>
+        ) : <span className="text-gray-400">— اختر نقطة البيع —</span>}
+        <span className="text-gray-400 mr-2">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="absolute z-50 w-full bg-white border-2 border-indigo-300 rounded-xl shadow-2xl mt-1 overflow-hidden">
+          <div className="max-h-64 overflow-y-auto">
+            {FIXED_POS_LIST.map(p => (
+              <button key={p.id} type="button" onClick={() => { onSelect(p); setOpen(false); }}
+                className="w-full text-right px-4 py-3 hover:bg-indigo-50 border-b border-gray-50 last:border-0 flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-gray-900 text-sm">{p.name}</div>
+                  {p.address && <div className="text-xs text-gray-500 mt-0.5">📍 {p.address}</div>}
+                </div>
+                <span className="text-xs text-green-600 font-mono mr-2">{p.lat.toFixed(4)}, {p.lng.toFixed(4)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MapPanel({ lat, lng, agentLat, agentLng, onChange }: {
   lat: string; lng: string; agentLat?: string; agentLng?: string;
   onChange: (lat: string, lng: string) => void;
@@ -347,7 +388,7 @@ function MapPanel({ lat, lng, agentLat, agentLng, onChange }: {
 
 function CompanyEntityForm({
   mode, form, onChange, photos, photoPreviews, onAddPhotos, onRemovePhoto,
-  selectedCenter, onSelectCenter,
+  selectedCenter, onSelectCenter, selectedFixedPos, onSelectFixedPos,
 }: {
   mode: "service_center" | "fixed_pos" | "mobile_van";
   form: CompanyEntityFormData;
@@ -357,6 +398,8 @@ function CompanyEntityForm({
   onRemovePhoto: (key: PhotoCatKey, i: number) => void;
   selectedCenter: ServiceCenterEntry | null;
   onSelectCenter: (c: ServiceCenterEntry) => void;
+  selectedFixedPos: FixedPosEntry | null;
+  onSelectFixedPos: (p: FixedPosEntry) => void;
 }) {
   const cfg = MODE_CONFIG[mode];
   const [saving, setSaving] = useState(false);
@@ -404,6 +447,13 @@ function CompanyEntityForm({
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
             <label className="block text-sm font-semibold text-gray-700 mb-2">🏢 اختر مركز الخدمات</label>
             <ServiceCenterSelector selected={selectedCenter} onSelect={onSelectCenter} />
+          </div>
+        )}
+        {/* Fixed POS picker — only in fixed_pos mode */}
+        {mode === "fixed_pos" && (
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">🏪 اختر نقطة البيع الثابتة</label>
+            <FixedPosSelector selected={selectedFixedPos} onSelect={onSelectFixedPos} />
           </div>
         )}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
@@ -525,6 +575,7 @@ export default function AgentRequestForm() {
   });
   const [companyForm, setCompanyForm] = useState<CompanyEntityFormData>(defaultCompanyEntityForm);
   const [selectedCenter, setSelectedCenter] = useState<ServiceCenterEntry | null>(null);
+  const [selectedFixedPos, setSelectedFixedPos] = useState<FixedPosEntry | null>(null);
   const [photos, setPhotos] = useState<PhotoState>({ sitePhotos: [], interiorPhotos: [], equipmentPhotos: [] });
   const [photoPreviews, setPhotoPreviews] = useState<PhotoPreviewState>({ sitePhotos: [], interiorPhotos: [], equipmentPhotos: [] });
   const [docUploads, setDocUploads] = useState<DocUpload[]>(DOC_TYPES.map(d => ({ docType: d.value, file: null, notes: "" })));
@@ -546,6 +597,17 @@ export default function AgentRequestForm() {
       longitude: String(selectedCenter.lng),
     }));
   }, [selectedCenter]);
+
+  useEffect(() => {
+    if (!selectedFixedPos) return;
+    setCompanyForm(p => ({
+      ...p,
+      entityName: selectedFixedPos.name,
+      address: selectedFixedPos.address || p.address,
+      latitude: String(selectedFixedPos.lat),
+      longitude: String(selectedFixedPos.lng),
+    }));
+  }, [selectedFixedPos]);
 
   useEffect(() => { if (form.hasDevices !== "true" && form.services.length > 0) setForm(p => ({ ...p, services: [] })); }, [form.hasDevices, form.services.length]);
   useEffect(() => { if (newAgentForm.hasDevices !== "true" && newAgentForm.services.length > 0) setNewAgentForm(p => ({ ...p, services: [] })); }, [newAgentForm.hasDevices, newAgentForm.services.length]);
@@ -788,6 +850,8 @@ export default function AgentRequestForm() {
             onAddPhotos={handleAddPhotos} onRemovePhoto={handleRemovePhoto}
             selectedCenter={selectedCenter}
             onSelectCenter={c => setSelectedCenter(c)}
+            selectedFixedPos={selectedFixedPos}
+            onSelectFixedPos={p => setSelectedFixedPos(p)}
           />
         )}
 
