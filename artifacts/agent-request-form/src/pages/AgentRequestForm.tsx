@@ -457,8 +457,14 @@ export default function AgentRequestForm() {
                 </MapContainer>
               </div>
               <div className="grid gap-3 md:grid-cols-2 mt-4">
-                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} placeholder="خط العرض" />
-                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} placeholder="خط الطول" />
+                <div className="space-y-1">
+                  <input className="w-full rounded-xl border border-gray-200 p-3" value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} placeholder="خط العرض" />
+                  <p className="text-xs text-gray-500">هذا هو خط العرض</p>
+                </div>
+                <div className="space-y-1">
+                  <input className="w-full rounded-xl border border-gray-200 p-3" value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} placeholder="خط الطول" />
+                  <p className="text-xs text-gray-500">هذا هو خط الطول</p>
+                </div>
               </div>
             </div>
 
