@@ -42,6 +42,11 @@ const ACTIVITY_TYPES = [
   { value: "peddler", label: "بائع متجول" },
 ];
 
+const INSPECTION_OPTIONS = [
+  { value: "", label: "اختر نوع التفتيش" },
+  { value: "agent_inspection", label: "التفتيش على الوكلاء" },
+];
+
 const SERVICES_AVAILABLE = [
   { value: "4G", label: "4G" },
   { value: "FWA", label: "FWA" },
@@ -53,6 +58,7 @@ const SERVICES_AVAILABLE = [
 ];
 
 type FormData = {
+  inspectionType: string;
   agentName: string;
   agentEmail: string;
   city: string;
@@ -288,6 +294,7 @@ function AgentSelector({ selected, onSelect }: { selected: AgentEntry | null; on
 export default function AgentRequestForm() {
   const [selectedAgent, setSelectedAgent] = useState<AgentEntry | null>(AGENTS[0] ?? null);
   const [form, setForm] = useState<FormData>({
+    inspectionType: "",
     agentName: AGENTS[0]?.name ?? "",
     agentEmail: AGENTS[0]?.email ?? "",
     city: AGENTS[0]?.city ?? "",
@@ -389,6 +396,9 @@ export default function AgentRequestForm() {
 
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
               <div className="grid gap-4 md:grid-cols-2">
+                <select className="w-full rounded-xl border border-gray-200 p-3 md:col-span-2" value={form.inspectionType} onChange={(e) => setForm({ ...form, inspectionType: e.target.value })}>
+                  {INSPECTION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
                 <input className="w-full rounded-xl border border-gray-200 p-3" value={form.agentName} onChange={(e) => setForm({ ...form, agentName: e.target.value })} placeholder="اسم الوكيل" />
                 <input className="w-full rounded-xl border border-gray-200 p-3" value={form.agentEmail} onChange={(e) => setForm({ ...form, agentEmail: e.target.value })} placeholder="بريد الوكيل" />
                 <input className="w-full rounded-xl border border-gray-200 p-3" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder="الهاتف" />
