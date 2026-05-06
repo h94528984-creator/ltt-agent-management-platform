@@ -53,14 +53,12 @@ const SERVICES_AVAILABLE = [
 ];
 
 type FormData = {
-  representativeName: string;
-  representativeEmail: string;
   agentName: string;
-  mobile: string;
-  landline: string;
   agentEmail: string;
   city: string;
   fullAddress: string;
+  mobile: string;
+  landline: string;
   activityType: string;
   latitude: string;
   longitude: string;
@@ -268,14 +266,12 @@ function AgentSelector({ selected, onSelect }: { selected: AgentEntry | null; on
 export default function AgentRequestForm() {
   const [selectedAgent, setSelectedAgent] = useState<AgentEntry | null>(AGENTS[0] ?? null);
   const [form, setForm] = useState<FormData>({
-    representativeName: REPRESENTATIVES[0]?.name ?? "",
-    representativeEmail: REPRESENTATIVES[0]?.email ?? "",
     agentName: AGENTS[0]?.name ?? "",
-    mobile: AGENTS[0]?.phone ?? "",
-    landline: "",
     agentEmail: AGENTS[0]?.email ?? "",
     city: AGENTS[0]?.city ?? "",
     fullAddress: AGENTS[0]?.address ?? "",
+    mobile: AGENTS[0]?.phone ?? "",
+    landline: "",
     activityType: ACTIVITY_TYPES[0]?.value ?? "",
     latitude: AGENTS[0]?.lat?.toString() ?? "",
     longitude: AGENTS[0]?.lng?.toString() ?? "",
@@ -363,11 +359,10 @@ export default function AgentRequestForm() {
 
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
               <div className="grid gap-4 md:grid-cols-2">
-                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.representativeName} onChange={(e) => setForm({ ...form, representativeName: e.target.value })} placeholder="اسم المفتش" />
-                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.representativeEmail} onChange={(e) => setForm({ ...form, representativeEmail: e.target.value })} placeholder="بريد المفتش" />
                 <input className="w-full rounded-xl border border-gray-200 p-3" value={form.agentName} onChange={(e) => setForm({ ...form, agentName: e.target.value })} placeholder="اسم الوكيل" />
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.agentEmail} onChange={(e) => setForm({ ...form, agentEmail: e.target.value })} placeholder="بريد الوكيل" />
                 <input className="w-full rounded-xl border border-gray-200 p-3" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder="الهاتف" />
-                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="المدينة" />
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="مكان الوكيل / المدينة" />
                 <select className="w-full rounded-xl border border-gray-200 p-3" value={form.activityType} onChange={(e) => setForm({ ...form, activityType: e.target.value })}>
                   {ACTIVITY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
