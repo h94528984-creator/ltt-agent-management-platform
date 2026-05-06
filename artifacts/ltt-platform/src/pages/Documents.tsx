@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { api } from "@/lib/api";
+import { getUser } from "@/lib/auth";
 import { exportCsv } from "@/lib/exportCsv";
 import {
   DOC_TYPE_LABELS, DOC_TYPE_OPTIONS, STATUS_LABELS, STATUS_COLORS,
@@ -218,7 +219,9 @@ export default function Documents() {
                     <td className="px-4 py-3">
                       <div className="flex gap-1 justify-end">
                         <button onClick={() => setEditing(d)} className="p-1.5 hover:bg-muted rounded" title="تعديل"><Pencil size={13} /></button>
-                        <button onClick={() => handleDelete(d)} className="p-1.5 hover:bg-red-50 rounded" title="حذف"><Trash2 size={13} className="text-red-600" /></button>
+                        {getUser()?.role === "admin" && (
+                          <button onClick={() => handleDelete(d)} className="p-1.5 hover:bg-red-50 rounded" title="حذف"><Trash2 size={13} className="text-red-600" /></button>
+                        )}
                       </div>
                     </td>
                   </tr>

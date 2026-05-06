@@ -89,4 +89,18 @@ router.patch("/tickets/:id", async (req, res): Promise<void> => {
   res.json(ticket);
 });
 
+router.delete("/tickets/:id", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const [deleted] = await db.delete(ticketsTable).where(eq(ticketsTable.id, id)).returning();
+  if (!deleted) {
+    res.status(404).json({ error: "Ticket not found" });
+    return;
+  }
+  res.json({ success: true });
+});
+
 export default router;

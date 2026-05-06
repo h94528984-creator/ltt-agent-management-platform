@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { Search, UserCheck, UserX } from "lucide-react";
+import { getUser } from "@/lib/auth";
+import { Search, UserCheck, UserX, Trash2 } from "lucide-react";
 
 interface User {
   id: number;
@@ -122,9 +123,28 @@ export default function Users() {
               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[user.role] ?? "bg-gray-100 text-gray-600"}`}>
                 {ROLE_LABELS[user.role] ?? user.role}
               </span>
-              <span className="text-xs text-muted-foreground">
-                {new Date(user.createdAt).toLocaleDateString("ar-LY")}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {new Date(user.createdAt).toLocaleDateString("ar-LY")}
+                </span>
+                {getUser()?.role === "admin" && getUser()?.id !== user.id && (
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`هل تريد حذف المستخدم "${user.fullName}"؟`)) return;
+                      try {
+                        await api.delete(`/users/${user.id}`);
+                        setUsers((prev) => prev.filter((u) => u.id !== user.id));
+                      } catch (e) {
+                        alert("تعذر حذف المستخدم");
+                      }
+                    }}
+                    className="p-1.5 hover:bg-red-50 rounded"
+                    title="حذف المستخدم"
+                  >
+                    <Trash2 size={14} className="text-red-600" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}

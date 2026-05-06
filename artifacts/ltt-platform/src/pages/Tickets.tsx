@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { getUser } from "@/lib/auth";
 import type { AgentRequest } from "@/lib/api";
-import { Search, ChevronDown, AlertCircle, Clock, CheckCircle2, Plus, X, MapPin, Navigation, Inbox } from "lucide-react";
+import { Search, ChevronDown, AlertCircle, Clock, CheckCircle2, Plus, X, MapPin, Navigation, Inbox, Trash2 } from "lucide-react";
 import { MapPickerModal } from "@/components/MapPicker";
 
 const TICKET_TITLE_PRESETS = [
@@ -407,6 +408,25 @@ export default function Tickets() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground text-xs">{new Date(t.createdAt).toLocaleDateString("ar-LY")}</td>
+                  <td className="px-4 py-3">
+                    {getUser()?.role === "admin" && (
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`هل تريد حذف التذكرة "${t.title}"؟`)) return;
+                          try {
+                            await api.delete(`/tickets/${t.id}`);
+                            setTickets((prev) => prev.filter((x) => x.id !== t.id));
+                          } catch (e) {
+                            alert("تعذر حذف التذكرة");
+                          }
+                        }}
+                        className="p-1.5 hover:bg-red-50 rounded"
+                        title="حذف التذكرة"
+                      >
+                        <Trash2 size={14} className="text-red-600" />
+                      </button>
+                    )}
+                  </td>
                 </tr>
               );
             })}
