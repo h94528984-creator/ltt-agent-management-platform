@@ -42,7 +42,7 @@ const ACTIVITY_TYPES = [
   { value: "peddler", label: "بائع متجول" },
 ];
 
-export const SERVICES_AVAILABLE = [
+const SERVICES_AVAILABLE = [
   { value: "4G", label: "4G" },
   { value: "FWA", label: "FWA" },
   { value: "ADSL", label: "ADSL" },
@@ -253,5 +253,114 @@ function AgentSelector({ selected, onSelect }: { selected: AgentEntry | null; on
 }
 
 export default function AgentRequestForm() {
-  return <div />;
+  const [selectedAgent, setSelectedAgent] = useState<AgentEntry | null>(AGENTS[0] ?? null);
+  const [form, setForm] = useState<FormData>({
+    representativeName: REPRESENTATIVES[0]?.name ?? "",
+    representativeEmail: REPRESENTATIVES[0]?.email ?? "",
+    agentName: AGENTS[0]?.name ?? "",
+    mobile: AGENTS[0]?.phone ?? "",
+    landline: "",
+    agentEmail: AGENTS[0]?.email ?? "",
+    city: AGENTS[0]?.city ?? "",
+    fullAddress: AGENTS[0]?.address ?? "",
+    activityType: ACTIVITY_TYPES[0]?.value ?? "",
+    latitude: AGENTS[0]?.lat?.toString() ?? "",
+    longitude: AGENTS[0]?.lng?.toString() ?? "",
+    locationDescription: "",
+    hasSignboard: "true",
+    hasDevices: "true",
+    internetQuality: "good",
+    staffReadiness: "3",
+    areaTraffic: "medium",
+    marketDensitySameCity: "0",
+    marketDensitySameStreet: "0",
+    transactionVolumeAdsl: "0",
+    transactionVolume4g: "0",
+    documentsComplete: "true",
+    brandIdentityCompliant: "true",
+    notes: "",
+  });
+
+  useEffect(() => {
+    if (!selectedAgent) return;
+    setForm((prev) => ({
+      ...prev,
+      agentName: selectedAgent.name,
+      mobile: selectedAgent.phone,
+      agentEmail: selectedAgent.email,
+      city: selectedAgent.city,
+      fullAddress: selectedAgent.address,
+      latitude: selectedAgent.lat?.toString() ?? "",
+      longitude: selectedAgent.lng?.toString() ?? "",
+    }));
+  }, [selectedAgent]);
+
+  const scores = calcScores(form);
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6" dir="rtl">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+          <h1 className="text-2xl font-bold text-gray-900">التفتيش على الوكلاء</h1>
+          <p className="mt-1 text-sm text-gray-500">اختر وكيلاً من القائمة ثم أكمل بيانات التفتيش.</p>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">الوكيل</label>
+              <AgentSelector
+                selected={selectedAgent}
+                onSelect={(a) => {
+                  setSelectedAgent(a);
+                  setForm((prev) => ({ ...prev, agentName: a.name, mobile: a.phone, agentEmail: a.email, city: a.city, fullAddress: a.address }));
+                }}
+              />
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.representativeName} onChange={(e) => setForm({ ...form, representativeName: e.target.value })} placeholder="اسم المفتش" />
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.representativeEmail} onChange={(e) => setForm({ ...form, representativeEmail: e.target.value })} placeholder="بريد المفتش" />
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.agentName} onChange={(e) => setForm({ ...form, agentName: e.target.value })} placeholder="اسم الوكيل" />
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} placeholder="الهاتف" />
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="المدينة" />
+                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.activityType} onChange={(e) => setForm({ ...form, activityType: e.target.value })}>
+                  {ACTIVITY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <h2 className="font-semibold text-gray-900 mb-3">التقييم</h2>
+              <div className="space-y-3">
+                <ScoreBar label="الجاهزية" value={scores.readiness} color="bg-blue-500" />
+                <ScoreBar label="المبيعات" value={scores.sales} color="bg-emerald-500" />
+                <ScoreBar label="الالتزام" value={scores.compliance} color="bg-orange-500" />
+                <ScoreBar label="النهائي" value={scores.final} color="bg-purple-500" />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <h2 className="font-semibold text-gray-900 mb-3">الموقع</h2>
+              <div className="h-80 rounded-xl overflow-hidden border border-gray-200">
+                <MapContainer center={[32.8872, 13.1913]} zoom={6} className="h-full w-full">
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  <MapPicker onPick={(lat, lng) => setForm((prev) => ({ ...prev, latitude: String(lat), longitude: String(lng) }))} />
+                  {form.latitude && form.longitude && <Marker position={[Number(form.latitude), Number(form.longitude)]} />}
+                </MapContainer>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <h2 className="font-semibold text-gray-900 mb-3">ملاحظات</h2>
+              <textarea className="w-full rounded-xl border border-gray-200 p-3 min-h-32" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
