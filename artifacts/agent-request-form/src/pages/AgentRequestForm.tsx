@@ -331,6 +331,61 @@ export default function AgentRequestForm() {
               </div>
             </div>
 
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
+              <h2 className="font-semibold text-gray-900">نوع القناة والخدمات</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.activityType} onChange={(e) => setForm({ ...form, activityType: e.target.value })}>
+                  {ACTIVITY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.fullAddress} onChange={(e) => setForm({ ...form, fullAddress: e.target.value })} placeholder="العنوان الكامل" />
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {SERVICES_AVAILABLE.map((s) => (
+                  <label key={s.value} className="flex items-center gap-2 rounded-xl border border-gray-200 p-3">
+                    <input type="checkbox" checked={form.notes.includes(s.value)} onChange={() => {
+                      const has = form.notes.includes(s.value);
+                      const next = has ? form.notes.replace(s.value, "") : `${form.notes} ${s.value}`.trim();
+                      setForm({ ...form, notes: next });
+                    }} />
+                    <span>{s.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <h2 className="font-semibold text-gray-900 mb-3">التراخيص والجاهزية</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.documentsComplete} onChange={(e) => setForm({ ...form, documentsComplete: e.target.value })}>
+                  <option value="true">الوثائق مكتملة</option>
+                  <option value="false">الوثائق ناقصة</option>
+                </select>
+                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.brandIdentityCompliant} onChange={(e) => setForm({ ...form, brandIdentityCompliant: e.target.value })}>
+                  <option value="true">الهوية التجارية متوافقة</option>
+                  <option value="false">الهوية التجارية غير متوافقة</option>
+                </select>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 mt-4">
+                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasSignboard} onChange={(e) => setForm({ ...form, hasSignboard: e.target.value })}>
+                  <option value="true">يوجد لافتة</option>
+                  <option value="false">لا توجد لافتة</option>
+                </select>
+                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasDevices} onChange={(e) => setForm({ ...form, hasDevices: e.target.value })}>
+                  <option value="true">الأجهزة متوفرة</option>
+                  <option value="false">الأجهزة غير متوفرة</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <h2 className="font-semibold text-gray-900 mb-3">إرسال/تصدير</h2>
+              <div className="flex flex-wrap gap-3">
+                <button type="button" className="rounded-xl bg-black text-white px-4 py-3">حفظ التفتيش</button>
+                <button type="button" className="rounded-xl border border-gray-200 px-4 py-3">تصدير PDF</button>
+                <button type="button" className="rounded-xl border border-gray-200 px-4 py-3">تصدير Excel</button>
+              </div>
+            </div>
+
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
               <h2 className="font-semibold text-gray-900 mb-3">التقييم</h2>
               <div className="space-y-3">
