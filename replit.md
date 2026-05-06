@@ -104,6 +104,8 @@ pnpm --filter @workspace/db run push            # Push DB schema to PostgreSQL
 
 ## Recent Changes
 
+- **Form ↔ Entities sync**: Inspection form's ServiceCenterSelector / FixedPosSelector now fetch from `/api/agent-requests?entityType=...` (via `useEntityList` hook in `AgentRequestForm.tsx`) instead of hardcoded files. Static `serviceCenters.ts` / `fixedPosList.ts` deleted; their content seeded into `agent_requests` (status=approved, request_id `LTT-SC-00X` / `LTT-FP-001`). Adding/editing/cancelling a company entity in the management Entities page is now reflected immediately in the field form.
+
 - **Tickets — preset titles + auto-fill**: CreateTicketModal replaces free-text title with 5 fixed tiles (🔍 تفتيش/ ➕ وكيل جديد / 🏢 مركز خدمات / 🏪 نقطة بيع ثابتة / 🚐 سيارة بيع متنقلة). Selecting a preset shows linked-entity dropdown (filtered by entityType) which auto-fills locationName + lat/lng + agentId.
 - **Tickets — "تذاكري" filter**: toggle button on Tickets page filters by `assignedToId === currentUser`; shows count badge.
 - **Dashboard "تذاكر تعنيك" panel**: pinned card listing user's open assigned tickets, sorted by priority, with map links per row. Hidden when none.

@@ -5,8 +5,28 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { AGENTS, type AgentEntry } from "../data/agentsList";
-import { SERVICE_CENTERS, type ServiceCenterEntry } from "../data/serviceCenters";
-import { FIXED_POS_LIST, type FixedPosEntry } from "../data/fixedPosList";
+
+export type ServiceCenterEntry = { id: number; name: string; lat: number; lng: number; address: string };
+export type FixedPosEntry = { id: number; name: string; lat: number; lng: number; address: string };
+
+function useEntityList(entityType: "service_center" | "fixed_pos" | "mobile_van") {
+  const [items, setItems] = useState<ServiceCenterEntry[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_BASE}/agent-requests?entityType=${entityType}`)
+      .then(r => r.ok ? r.json() : [])
+      .then((rows: Array<{ id: number; agentName: string; latitude: number | null; longitude: number | null; fullAddress: string | null; status: string }>) => {
+        if (cancelled) return;
+        setItems(rows
+          .filter(r => r.status !== "cancelled" && r.latitude != null && r.longitude != null)
+          .map(r => ({ id: r.id, name: r.agentName, lat: Number(r.latitude), lng: Number(r.longitude), address: r.fullAddress ?? "" }))
+        );
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [entityType]);
+  return items;
+}
 
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, shadowUrl: markerShadow });
@@ -258,7 +278,7 @@ function AgentSelector({ selected, onSelect }: { selected: AgentEntry | null; on
   );
 }
 
-function ServiceCenterSelector({ selected, onSelect }: { selected: ServiceCenterEntry | null; onSelect: (c: ServiceCenterEntry) => void }) {
+function ServiceCenterSelector({ selected, onSelect, items }: { selected: ServiceCenterEntry | null; onSelect: (c: ServiceCenterEntry) => void; items: ServiceCenterEntry[] }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -281,7 +301,8 @@ function ServiceCenterSelector({ selected, onSelect }: { selected: ServiceCenter
       {open && (
         <div className="absolute z-50 w-full bg-white border-2 border-blue-300 rounded-xl shadow-2xl mt-1 overflow-hidden">
           <div className="max-h-64 overflow-y-auto">
-            {SERVICE_CENTERS.map(c => (
+            {items.length === 0 && <div className="px-4 py-3 text-sm text-gray-400">— لا توجد مراكز معتمدة بعد —</div>}
+            {items.map(c => (
               <button key={c.id} type="button" onClick={() => { onSelect(c); setOpen(false); }}
                 className="w-full text-right px-4 py-3 hover:bg-blue-50 border-b border-gray-50 last:border-0 flex items-center justify-between">
                 <div>
@@ -298,7 +319,7 @@ function ServiceCenterSelector({ selected, onSelect }: { selected: ServiceCenter
   );
 }
 
-function FixedPosSelector({ selected, onSelect }: { selected: FixedPosEntry | null; onSelect: (p: FixedPosEntry) => void }) {
+function FixedPosSelector({ selected, onSelect, items }: { selected: FixedPosEntry | null; onSelect: (p: FixedPosEntry) => void; items: FixedPosEntry[] }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -321,7 +342,8 @@ function FixedPosSelector({ selected, onSelect }: { selected: FixedPosEntry | nu
       {open && (
         <div className="absolute z-50 w-full bg-white border-2 border-indigo-300 rounded-xl shadow-2xl mt-1 overflow-hidden">
           <div className="max-h-64 overflow-y-auto">
-            {FIXED_POS_LIST.map(p => (
+            {items.length === 0 && <div className="px-4 py-3 text-sm text-gray-400">— لا توجد نقاط بيع معتمدة بعد —</div>}
+            {items.map(p => (
               <button key={p.id} type="button" onClick={() => { onSelect(p); setOpen(false); }}
                 className="w-full text-right px-4 py-3 hover:bg-indigo-50 border-b border-gray-50 last:border-0 flex items-center justify-between">
                 <div>
@@ -402,6 +424,8 @@ function CompanyEntityForm({
   onSelectFixedPos: (p: FixedPosEntry) => void;
 }) {
   const cfg = MODE_CONFIG[mode];
+  const serviceCenters = useEntityList("service_center");
+  const fixedPosItems = useEntityList("fixed_pos");
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
@@ -446,14 +470,14 @@ function CompanyEntityForm({
         {mode === "service_center" && (
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
             <label className="block text-sm font-semibold text-gray-700 mb-2">🏢 اختر مركز الخدمات</label>
-            <ServiceCenterSelector selected={selectedCenter} onSelect={onSelectCenter} />
+            <ServiceCenterSelector selected={selectedCenter} onSelect={onSelectCenter} items={serviceCenters} />
           </div>
         )}
         {/* Fixed POS picker — only in fixed_pos mode */}
         {mode === "fixed_pos" && (
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
             <label className="block text-sm font-semibold text-gray-700 mb-2">🏪 اختر نقطة البيع الثابتة</label>
-            <FixedPosSelector selected={selectedFixedPos} onSelect={onSelectFixedPos} />
+            <FixedPosSelector selected={selectedFixedPos} onSelect={onSelectFixedPos} items={fixedPosItems} />
           </div>
         )}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
