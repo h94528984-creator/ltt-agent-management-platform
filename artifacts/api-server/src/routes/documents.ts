@@ -214,7 +214,7 @@ router.post("/documents", upload.single("file"), async (req, res): Promise<void>
 // ─── Update ───────────────────────────────────────────────────────────────
 router.patch("/documents/:id", upload.single("file"), async (req, res): Promise<void> => {
   try {
-    const id = parseInt(req.params["id"] ?? "");
+    const id = parseInt(String(req.params["id"] ?? ""));
     if (isNaN(id)) { res.status(400).json({ error: "معرف غير صالح" }); return; }
     const parsed = updateBody.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
