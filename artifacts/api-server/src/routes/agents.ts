@@ -114,6 +114,8 @@ router.patch("/agents/:id", async (req, res): Promise<void> => {
   if (d.phone !== undefined) updateData.phone = d.phone;
   if (d.email !== undefined) updateData.email = d.email;
   if (d.type != null) updateData.type = d.type;
+  if (d.channelType !== undefined) updateData.channelType = d.channelType;
+  if (d.classification !== undefined) updateData.classification = d.classification;
   if (d.status != null) updateData.status = d.status;
   if (d.notes !== undefined) updateData.notes = d.notes;
   if (d.contractStart !== undefined) updateData.contractStart = d.contractStart;

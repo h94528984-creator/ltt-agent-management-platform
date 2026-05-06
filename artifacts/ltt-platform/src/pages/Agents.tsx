@@ -15,6 +15,8 @@ interface Agent {
   address: string | null;
   phone: string | null;
   email: string | null;
+  channelType: string | null;
+  classification: string | null;
   contractStart: string | null;
   contractEnd: string | null;
   latitude: number | null;
@@ -213,8 +215,8 @@ export default function Agents() {
         {loading ? <div className="col-span-3 py-16 text-center text-muted-foreground">جاري التحميل...</div> : visibleAgents.length === 0 ? <div className="col-span-3 py-16 text-center text-muted-foreground">لا توجد نتائج</div> : visibleAgents.map((agent) => {
           const score = scores.get(agent.id);
           const inspCount = inspectionsForAgent(agent).length;
-          const classKey = (agent.type === "dealer" ? "A" : "A");
-          const classInfo = AGENT_CLASS_INFO[classKey] ?? AGENT_CLASS_INFO.A;
+          const classKey = agent.classification && AGENT_CLASS_INFO[agent.classification] ? agent.classification : null;
+          const classInfo = classKey ? AGENT_CLASS_INFO[classKey] : null;
           const docSt = docStatuses.get(agent.id);
           return <div key={agent.id} className="bg-white border border-border rounded-xl p-5 shadow-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all relative group" onClick={() => setSelected(agent)}>
             <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
@@ -263,9 +265,15 @@ export default function Agents() {
             )}
             <div className="mt-4 pt-3 border-t border-border flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${classInfo.color}`}>{classInfo.label}</span>
-                <span>{classInfo.guarantee}</span>
-                <span>{classInfo.maxBranches}</span>
+                {classInfo ? (
+                  <>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${classInfo.color}`}>{classInfo.label}</span>
+                    <span>{classInfo.guarantee}</span>
+                    <span>{classInfo.maxBranches}</span>
+                  </>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border bg-gray-50 text-gray-500 border-gray-200">التصنيف غير محدد</span>
+                )}
               </div>
               {score ? <><div className="flex items-center gap-1 text-xs text-muted-foreground"><Star size={12} /><span>التقييم</span></div><span className={`font-bold ${score.totalScore >= 85 ? "text-amber-500" : score.totalScore >= 70 ? "text-blue-500" : score.totalScore >= 50 ? "text-orange-500" : "text-red-500"}`}>{score.totalScore}/100</span></> : <span className="text-xs text-muted-foreground">لم يُقيَّم بعد</span>}
               <div className="flex items-center gap-2">
@@ -275,6 +283,149 @@ export default function Agents() {
           </div>;
         })}
       </div>
+      {editing && (
+        <EditAgentModal
+          agent={editing === "new" ? null : editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); load(); }}
+        />
+      )}
     </div>
+  );
+}
+
+function EditAgentModal({ agent, onClose, onSaved }: { agent: Agent | null; onClose: () => void; onSaved: () => void }) {
+  const isNew = agent === null;
+  const [form, setForm] = useState({
+    name: agent?.name ?? "",
+    city: agent?.city ?? "",
+    address: agent?.address ?? "",
+    phone: agent?.phone ?? "",
+    email: agent?.email ?? "",
+    classification: agent?.classification ?? "",
+    channelType: agent?.channelType ?? "agent_main",
+    status: agent?.status ?? "active",
+    latitude: agent?.latitude != null ? String(agent.latitude) : "",
+    longitude: agent?.longitude != null ? String(agent.longitude) : "",
+    notes: agent?.notes ?? "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true); setError(null);
+    try {
+      const payload = {
+        name: form.name.trim(),
+        city: form.city.trim() || null,
+        address: form.address.trim() || null,
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
+        classification: form.classification || null,
+        channelType: form.channelType || null,
+        status: form.status,
+        latitude: form.latitude ? Number(form.latitude) : null,
+        longitude: form.longitude ? Number(form.longitude) : null,
+        notes: form.notes.trim() || null,
+      };
+      if (isNew) {
+        await api.post("/agents", { ...payload, location: form.city.trim() || form.address.trim() || "—", type: "dealer" });
+      } else {
+        await api.patch(`/agents/${agent!.id}`, payload);
+      }
+      onSaved();
+    } catch (err) {
+      setError((err as Error).message || "فشل الحفظ");
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
+      <form onClick={(e) => e.stopPropagation()} onSubmit={handleSave}
+        className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-5 border-b border-border flex items-center justify-between sticky top-0 bg-white">
+          <h2 className="text-lg font-bold">{isNew ? "وكيل جديد" : `تعديل: ${agent!.name}`}</h2>
+          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">✕</button>
+        </div>
+        <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="اسم الوكيل *" className="md:col-span-2">
+            <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm" />
+          </Field>
+          <Field label="المدينة">
+            <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm" />
+          </Field>
+          <Field label="الهاتف">
+            <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm" dir="ltr" />
+          </Field>
+          <Field label="العنوان" className="md:col-span-2">
+            <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm" />
+          </Field>
+          <Field label="البريد الإلكتروني">
+            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm" dir="ltr" />
+          </Field>
+          <Field label="الحالة">
+            <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white">
+              {STATUS_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+            </select>
+          </Field>
+          <Field label="التصنيف (Class)">
+            <select value={form.classification} onChange={(e) => setForm({ ...form, classification: e.target.value })}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="">— غير محدد —</option>
+              {Object.entries(AGENT_CLASS_INFO).map(([k, v]) => <option key={k} value={k}>{v.label} ({v.guarantee})</option>)}
+            </select>
+          </Field>
+          <Field label="نوع القناة">
+            <select value={form.channelType} onChange={(e) => setForm({ ...form, channelType: e.target.value })}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="agent_main">وكيل رئيسي</option>
+              <option value="agent_sub">وكيل فرعي</option>
+              <option value="service_center">مركز خدمات</option>
+              <option value="fixed_pos">نقطة بيع ثابتة</option>
+              <option value="mobile_van">سيارة بيع متنقلة</option>
+              <option value="peddler">بائع متجول</option>
+            </select>
+          </Field>
+          <Field label="خط العرض (Latitude)">
+            <input value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm" dir="ltr" inputMode="decimal" />
+          </Field>
+          <Field label="خط الطول (Longitude)">
+            <input value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm" dir="ltr" inputMode="decimal" />
+          </Field>
+          <Field label="ملاحظات" className="md:col-span-2">
+            <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm" rows={3} />
+          </Field>
+          {error && <div className="md:col-span-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{error}</div>}
+        </div>
+        <div className="p-5 border-t border-border flex justify-end gap-2 sticky bottom-0 bg-white">
+          <button type="button" onClick={onClose}
+            className="px-4 py-2 border border-border rounded-lg text-sm hover:bg-muted">إلغاء</button>
+          <button type="submit" disabled={saving || !form.name.trim()}
+            className="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 disabled:opacity-50">
+            {saving ? "جاري الحفظ..." : "حفظ"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="text-xs font-medium text-muted-foreground mb-1 block">{label}</span>
+      {children}
+    </label>
   );
 }

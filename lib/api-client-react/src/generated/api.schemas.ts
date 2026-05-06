@@ -84,6 +84,10 @@ export interface Agent {
   email?: string | null;
   type: string;
   /** @nullable */
+  channelType?: string | null;
+  /** @nullable */
+  classification?: string | null;
+  /** @nullable */
   contractStart?: string | null;
   /** @nullable */
   contractEnd?: string | null;
@@ -112,6 +116,10 @@ export interface CreateAgentBody {
   /** @nullable */
   email?: string | null;
   type: string;
+  /** @nullable */
+  channelType?: string | null;
+  /** @nullable */
+  classification?: string | null;
   /** @nullable */
   contractStart?: string | null;
   /** @nullable */
@@ -142,6 +150,10 @@ export interface UpdateAgentBody {
   email?: string | null;
   /** @nullable */
   type?: string | null;
+  /** @nullable */
+  channelType?: string | null;
+  /** @nullable */
+  classification?: string | null;
   /** @nullable */
   contractStart?: string | null;
   /** @nullable */

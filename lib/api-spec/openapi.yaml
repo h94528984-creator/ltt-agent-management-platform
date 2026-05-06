@@ -1013,6 +1013,10 @@ components:
           type: ["string", "null"]
         type:
           type: string
+        channelType:
+          type: ["string", "null"]
+        classification:
+          type: ["string", "null"]
         contractStart:
           type: ["string", "null"]
           format: date-time
@@ -1061,6 +1065,10 @@ components:
           type: ["string", "null"]
         type:
           type: string
+        channelType:
+          type: ["string", "null"]
+        classification:
+          type: ["string", "null"]
         contractStart:
           type: ["string", "null"]
           format: date-time
@@ -1099,6 +1107,10 @@ components:
         email:
           type: ["string", "null"]
         type:
+          type: ["string", "null"]
+        channelType:
+          type: ["string", "null"]
+        classification:
           type: ["string", "null"]
         contractStart:
           type: ["string", "null"]

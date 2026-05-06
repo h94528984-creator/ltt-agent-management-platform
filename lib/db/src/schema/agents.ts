@@ -49,6 +49,7 @@ export const agentsTable = pgTable("agents", {
   // legacy `type` kept for backwards compat (default "dealer"); new code uses channelType
   type: text("type").notNull().default("dealer"),
   channelType: text("channel_type").notNull().default("agent_main"),
+  classification: text("classification"),
   // إدارة / تبعية إدارية
   administrativeUnit: text("administrative_unit"),
   // المسؤول المباشر
