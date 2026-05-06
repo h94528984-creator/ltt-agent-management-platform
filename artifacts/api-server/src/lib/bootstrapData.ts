@@ -25,6 +25,7 @@ async function applySeed(client: Client): Promise<ReseedCounts> {
   const cleanedSql = (seedSql as string)
     .split("\n")
     .filter((line) => !line.startsWith("\\"))
+    .filter((line) => !/^ALTER TABLE .* (DISABLE|ENABLE) TRIGGER ALL;?$/i.test(line.trim()))
     .join("\n");
 
   await client.query("BEGIN");
