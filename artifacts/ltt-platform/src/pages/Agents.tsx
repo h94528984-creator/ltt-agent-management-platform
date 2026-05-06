@@ -3,7 +3,6 @@ import { api } from "@/lib/api";
 import type { AgentRequest } from "@/lib/api";
 import { exportCsv } from "@/lib/exportCsv";
 import { Search, ChevronDown, MapPin, Phone, Mail, Star, Plus, Pencil, Trash2, Download, Eye, FileText, AlertTriangle } from "lucide-react";
-import type { AgentDocStatus } from "@/lib/api";
 import { Link } from "wouter";
 
 interface Agent {
@@ -58,7 +57,6 @@ const CLASS_LABELS: Record<string, string> = {
 export default function Agents() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [scores, setScores] = useState<Map<number, AgentScore>>(new Map());
-  const [docStatus, setDocStatus] = useState<Map<number, AgentDocStatus>>(new Map());
   const [requests, setRequests] = useState<AgentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -73,16 +71,12 @@ export default function Agents() {
       api.get<Agent[]>("/agents"),
       api.get<AgentScore[]>("/scores"),
       api.get<AgentRequest[]>("/agent-requests?limit=10000"),
-      api.get<AgentDocStatus[]>("/documents/agent-status"),
-    ]).then(([agts, scrs, reqs, ds]) => {
+    ]).then(([agts, scrs, reqs]) => {
       setAgents(agts ?? []);
       const map = new Map<number, AgentScore>();
       (scrs ?? []).forEach((s) => map.set(s.agentId, s));
       setScores(map);
       setRequests(reqs ?? []);
-      const dmap = new Map<number, AgentDocStatus>();
-      (ds ?? []).forEach((d) => dmap.set(d.agentId, d));
-      setDocStatus(dmap);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
@@ -101,6 +95,7 @@ export default function Agents() {
     const matchCity = !cityFilter || a.city === cityFilter;
     return matchSearch && matchStatus && matchCity;
   });
+  const visibleAgents = filtered.slice(0, 190);
 
   const inspectionsForAgent = useCallback((agent: Agent): AgentRequest[] => {
     return requests.filter((r) =>
@@ -203,10 +198,9 @@ export default function Agents() {
         ))}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {loading ? <div className="col-span-3 py-16 text-center text-muted-foreground">جاري التحميل...</div> : filtered.length === 0 ? <div className="col-span-3 py-16 text-center text-muted-foreground">لا توجد نتائج</div> : filtered.map((agent) => {
+        {loading ? <div className="col-span-3 py-16 text-center text-muted-foreground">جاري التحميل...</div> : visibleAgents.length === 0 ? <div className="col-span-3 py-16 text-center text-muted-foreground">لا توجد نتائج</div> : visibleAgents.map((agent) => {
           const score = scores.get(agent.id);
           const inspCount = inspectionsForAgent(agent).length;
-          const ds = docStatus.get(agent.id);
           return <div key={agent.id} className="bg-white border border-border rounded-xl p-5 shadow-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all relative group" onClick={() => setSelected(agent)}>
             <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
               <button onClick={(e) => { e.stopPropagation(); setEditing(agent); }} className="p-1.5 bg-white border border-border rounded hover:bg-muted" title="تعديل"><Pencil size={12} /></button>
@@ -219,13 +213,8 @@ export default function Agents() {
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
                 {score && <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${CLASS_COLORS[score.classification] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}>{CLASS_LABELS[score.classification] ?? score.classification}</span>}
-                {ds?.hasExpired ? (
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700 inline-flex items-center gap-1"><AlertTriangle size={10} /> ترخيص منتهٍ</span>
-                ) : ds?.hasExpiringSoon ? (
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 inline-flex items-center gap-1"><AlertTriangle size={10} /> ترخيص قارب على الانتهاء</span>
-                ) : null}
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${agent.status === "active" && !ds?.hasExpired ? "bg-green-100 text-green-700" : agent.status === "suspended" || ds?.hasExpired ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
-                  {ds?.hasExpired ? "موقوف (ترخيص منتهٍ)" : agent.status === "active" ? "نشط" : agent.status === "suspended" ? "موقوف" : "غير نشط"}
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${agent.status === "active" ? "bg-green-100 text-green-700" : agent.status === "suspended" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
+                  {agent.status === "active" ? "نشط" : agent.status === "suspended" ? "موقوف" : "غير نشط"}
                 </span>
               </div>
             </div>
@@ -238,9 +227,6 @@ export default function Agents() {
               {score ? <><div className="flex items-center gap-1 text-xs text-muted-foreground"><Star size={12} /><span>التقييم</span></div><span className={`font-bold ${score.totalScore >= 85 ? "text-amber-500" : score.totalScore >= 70 ? "text-blue-500" : score.totalScore >= 50 ? "text-orange-500" : "text-red-500"}`}>{score.totalScore}/100</span></> : <span className="text-xs text-muted-foreground">لم يُقيَّم بعد</span>}
               <div className="flex items-center gap-2">
                 {inspCount > 0 && <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-medium"><Eye size={11} />{inspCount}</span>}
-                <Link href="/documents" onClick={(e) => e.stopPropagation()}>
-                  <span className="inline-flex items-center gap-1 text-xs text-slate-600 font-medium hover:text-primary cursor-pointer"><FileText size={11} />{ds?.total ?? 0}</span>
-                </Link>
               </div>
             </div>
           </div>;
