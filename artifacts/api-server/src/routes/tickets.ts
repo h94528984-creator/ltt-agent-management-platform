@@ -30,10 +30,17 @@ router.post("/tickets", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const extra = req.body as Record<string, unknown>;
+  const lat = extra["latitude"] != null && extra["latitude"] !== "" ? Number(extra["latitude"]) : null;
+  const lng = extra["longitude"] != null && extra["longitude"] !== "" ? Number(extra["longitude"]) : null;
+  const locationName = extra["locationName"] ? String(extra["locationName"]) : null;
   const [ticket] = await db.insert(ticketsTable).values({
     ...parsed.data,
     assignedToId: parsed.data.assignedToId ?? null,
     agentId: parsed.data.agentId ?? null,
+    locationName,
+    latitude: lat,
+    longitude: lng,
   }).returning();
   res.status(201).json(ticket);
 });

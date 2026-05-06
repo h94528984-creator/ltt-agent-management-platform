@@ -104,6 +104,11 @@ pnpm --filter @workspace/db run push            # Push DB schema to PostgreSQL
 
 ## Recent Changes
 
+- **Entities page** (`/entities`, sidebar "كيانات الشركة"): manage company-owned entities (service_center / fixed_pos / mobile_van) — colored type cards with create-tile shortcuts, search/filter, approve/cancel actions, "افتح في الخرائط" button using `https://www.google.com/maps/dir/?api=1&destination=lat,lng`
+- **Tickets**: CreateTicketModal now has user-assignment dropdown (loads from `/users`), optional location (locationName + lat/lng + "use my GPS" button); ticket table shows assignee column + clickable maps badge
+- **Tickets schema**: added `locationName` (text), `latitude` / `longitude` (double precision); POST `/tickets` route accepts these alongside the OpenAPI `CreateTicketBody`
+- **Inspections**: "إنشاء عملية جديدة" button + CreateOperationModal (4 entity-type tiles) for creating agent_requests directly from management platform
+
 - **Multi-entity agent_requests**: added `entityType` (agent/service_center/fixed_pos/mobile_van/inspection), `services` (jsonb), `staffCount`; `activityType` now nullable
 - New JSON `POST /api/agent-requests` route accepts company-entity payloads (entityName/responsibleEmployee/employeePhone/address) — original multipart `POST /api/agent-request` for agent inspections kept
 - `PATCH /api/agent-request/:id/status` now accepts `cancelled`; GET supports `?entityType=` filter

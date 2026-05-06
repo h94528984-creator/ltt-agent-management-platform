@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, doublePrecision } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -12,6 +12,9 @@ export const ticketsTable = pgTable("tickets", {
   createdById: integer("created_by_id").notNull(),
   assignedToId: integer("assigned_to_id"),
   agentId: integer("agent_id"),
+  locationName: text("location_name"),
+  latitude: doublePrecision("latitude"),
+  longitude: doublePrecision("longitude"),
   resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

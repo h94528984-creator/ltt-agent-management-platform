@@ -1,11 +1,12 @@
 import { Link, useRoute } from "wouter";
-import { LayoutDashboard, ClipboardList, Users, BarChart3, Package, Ticket, LogOut, UserCheck, FileText } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Users, BarChart3, Package, Ticket, LogOut, UserCheck, FileText, Building2 } from "lucide-react";
 import { clearAuth, getUser } from "@/lib/auth";
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "لوحة التحكم" },
   { href: "/inspections", icon: ClipboardList, label: "تقارير التفتيش" },
   { href: "/agents", icon: Users, label: "إدارة الوكلاء" },
+  { href: "/entities", icon: Building2, label: "كيانات الشركة" },
   { href: "/documents", icon: FileText, label: "التراخيص والمستندات" },
   { href: "/analytics", icon: BarChart3, label: "التحليلات" },
   { href: "/tickets", icon: Ticket, label: "التذاكر" },
