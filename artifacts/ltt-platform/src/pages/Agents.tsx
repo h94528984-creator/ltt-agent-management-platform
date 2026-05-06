@@ -234,9 +234,14 @@ export default function Agents() {
               {agent.phone && <div className="flex items-center gap-1.5 text-muted-foreground"><Phone size={13} /><span className="ltr" dir="ltr">{agent.phone}</span></div>}
               {agent.email && <div className="flex items-center gap-1.5 text-muted-foreground truncate"><Mail size={13} /><span className="ltr text-xs truncate" dir="ltr">{agent.email}</span></div>}
             </div>
-            <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
+            <div className="mt-4 pt-3 border-t border-border flex items-center justify-between gap-2">
               {score ? <><div className="flex items-center gap-1 text-xs text-muted-foreground"><Star size={12} /><span>التقييم</span></div><span className={`font-bold ${score.totalScore >= 85 ? "text-amber-500" : score.totalScore >= 70 ? "text-blue-500" : score.totalScore >= 50 ? "text-orange-500" : "text-red-500"}`}>{score.totalScore}/100</span></> : <span className="text-xs text-muted-foreground">لم يُقيَّم بعد</span>}
-              {inspCount > 0 && <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-medium"><Eye size={11} />{inspCount} تفتيش</span>}
+              <div className="flex items-center gap-2">
+                {inspCount > 0 && <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-medium"><Eye size={11} />{inspCount}</span>}
+                <Link href="/documents" onClick={(e) => e.stopPropagation()}>
+                  <span className="inline-flex items-center gap-1 text-xs text-slate-600 font-medium hover:text-primary cursor-pointer"><FileText size={11} />{ds?.total ?? 0}</span>
+                </Link>
+              </div>
             </div>
           </div>;
         })}
