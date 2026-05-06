@@ -96,17 +96,26 @@ type PhotoPreviewState = Record<PhotoCatKey, string[]>;
 
 function calcScores(f: FormData): Scores {
   let readiness = 0;
-  if (f.hasSignboard === "true") readiness += 25;
-  if (f.hasDevices === "true") readiness += 25;
-  if (f.internetQuality === "good") readiness += 30;
-  else if (f.internetQuality === "medium") readiness += 15;
-  readiness += Math.round((parseInt(f.staffReadiness || "3") / 5) * 20);
+  if (f.hasSignboard === "true") readiness += 20;
+  if (f.hasDevices === "true") readiness += 20;
+  if (f.services.includes("FTTH")) readiness += 15;
+  if (f.services.includes("FWA")) readiness += 10;
+  if (f.services.includes("4G")) readiness += 10;
+  if (f.internetQuality === "good") readiness += 15;
+  else if (f.internetQuality === "medium") readiness += 8;
+  readiness += Math.round((parseInt(f.staffReadiness || "3") / 5) * 10);
   readiness = Math.min(100, readiness);
 
   let sales = 0;
   if (f.areaTraffic === "high") sales += 40;
   else if (f.areaTraffic === "medium") sales += 25;
   else sales += 10;
+  const cityCompetitors = parseInt(f.marketDensitySameCity || "0");
+  if (cityCompetitors === 0) sales += 20;
+  else if (cityCompetitors === 1) sales += 16;
+  else if (cityCompetitors === 2) sales += 12;
+  else if (cityCompetitors <= 4) sales += 8;
+  else sales += 4;
   const street = parseInt(f.marketDensitySameStreet || "0");
   if (street === 0) sales += 30;
   else if (street === 1) sales += 22;
@@ -476,7 +485,7 @@ export default function AgentRequestForm() {
                   <option value="low">حركة المنطقة التجارية منخفضة</option>
                 </select>
                 <select className="w-full rounded-xl border border-gray-200 p-3" value={form.marketDensitySameCity} onChange={(e) => setForm({ ...form, marketDensitySameCity: e.target.value })}>
-                  <option value="0">منافسون نفس المدينة: 0</option>
+                  <option value="0">منافسو نفس المدينة: 0</option>
                   <option value="1">1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>
@@ -484,7 +493,7 @@ export default function AgentRequestForm() {
                   <option value="5">5+</option>
                 </select>
                 <select className="w-full rounded-xl border border-gray-200 p-3" value={form.marketDensitySameStreet} onChange={(e) => setForm({ ...form, marketDensitySameStreet: e.target.value })}>
-                  <option value="0">نفس الشارع: 0</option>
+                  <option value="0">منافسو نفس الشارع: 0</option>
                   <option value="1">1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>
