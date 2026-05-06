@@ -90,6 +90,9 @@ const PHOTO_CATS: PhotoCategory[] = [
   { key: "equipmentPhotos", label: "صور الأجهزة والمعدات", icon: "🖥️" },
 ];
 
+type PhotoState = Record<PhotoCatKey, File[]>;
+type PhotoPreviewState = Record<PhotoCatKey, string[]>;
+
 function calcScores(f: FormData): Scores {
   let readiness = 0;
   if (f.hasSignboard === "true") readiness += 25;
@@ -280,6 +283,8 @@ export default function AgentRequestForm() {
     brandIdentityCompliant: "true",
     notes: "",
   });
+  const [photos, setPhotos] = useState<PhotoState>({ sitePhotos: [], interiorPhotos: [], equipmentPhotos: [] });
+  const [photoPreviews, setPhotoPreviews] = useState<PhotoPreviewState>({ sitePhotos: [], interiorPhotos: [], equipmentPhotos: [] });
 
   useEffect(() => {
     if (!selectedAgent) return;
@@ -296,6 +301,24 @@ export default function AgentRequestForm() {
   }, [selectedAgent]);
 
   const scores = calcScores(form);
+
+  const handleAddPhotos = useCallback((key: PhotoCatKey, list: FileList | null) => {
+    if (!list) return;
+    const next = Array.from(list).slice(0, 5);
+    setPhotos((prev) => ({ ...prev, [key]: next }));
+    setPhotoPreviews((prev) => ({
+      ...prev,
+      [key]: next.map((file) => file.type.startsWith("image/") ? URL.createObjectURL(file) : file.name),
+    }));
+  }, []);
+
+  const handleRemovePhoto = useCallback((key: PhotoCatKey, index: number) => {
+    setPhotos((prev) => {
+      const next = prev[key].filter((_, i) => i !== index);
+      setPhotoPreviews((p) => ({ ...p, [key]: next.map((file) => file.type.startsWith("image/") ? URL.createObjectURL(file) : file.name) }));
+      return { ...prev, [key]: next };
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6" dir="rtl">
@@ -412,6 +435,20 @@ export default function AgentRequestForm() {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
               <h2 className="font-semibold text-gray-900 mb-3">ملاحظات</h2>
               <textarea className="w-full rounded-xl border border-gray-200 p-3 min-h-32" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
+              <h2 className="font-semibold text-gray-900">المرفقات</h2>
+              {PHOTO_CATS.map((cat) => (
+                <PhotoUploadSection
+                  key={cat.key}
+                  cat={cat}
+                  files={photos[cat.key]}
+                  previews={photoPreviews[cat.key]}
+                  onAdd={(files) => handleAddPhotos(cat.key, files)}
+                  onRemove={(i) => handleRemovePhoto(cat.key, i)}
+                />
+              ))}
             </div>
           </div>
         </div>
