@@ -36,10 +36,20 @@ const REPRESENTATIVES = [
 const ACTIVITY_TYPES = [
   { value: "agent_main", label: "وكيل رئيسي" },
   { value: "agent_sub", label: "وكيل فرعي" },
-  { value: "pos_adsl", label: "نقطة بيع ADSL" },
-  { value: "pos_4g", label: "نقطة بيع 4G" },
-  { value: "pos_adsl_4g", label: "نقطة بيع ADSL/4G" },
-  { value: "dealer", label: "وكيل" },
+  { value: "service_center", label: "مركز خدمات" },
+  { value: "fixed_pos", label: "نقطة بيع ثابتة" },
+  { value: "mobile_van", label: "سيارة بيع وخدمات متنقلة" },
+  { value: "peddler", label: "بائع متجول" },
+];
+
+export const SERVICES_AVAILABLE = [
+  { value: "4G", label: "4G" },
+  { value: "FWA", label: "FWA" },
+  { value: "ADSL", label: "ADSL" },
+  { value: "FTTH", label: "FTTH" },
+  { value: "eSIM", label: "eSIM" },
+  { value: "FIXD_VOLTE", label: "FIXD VoLTE" },
+  { value: "RECHARGE", label: "Recharge" },
 ];
 
 type FormData = {

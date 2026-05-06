@@ -8,6 +8,7 @@ import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Inspections from "@/pages/Inspections";
 import Agents from "@/pages/Agents";
+import Documents from "@/pages/Documents";
 import Analytics from "@/pages/Analytics";
 import Tickets from "@/pages/Tickets";
 import Inventory from "@/pages/Inventory";
@@ -56,6 +57,7 @@ function AppLayout() {
           <Route path="/" component={Dashboard} />
           <Route path="/inspections" component={Inspections} />
           <Route path="/agents" component={Agents} />
+          <Route path="/documents" component={Documents} />
           <Route path="/analytics" component={Analytics} />
           <Route path="/tickets" component={Tickets} />
           <Route path="/inventory" component={Inventory} />

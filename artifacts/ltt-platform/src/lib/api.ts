@@ -72,14 +72,36 @@ export interface AgentRequest {
 export interface DashboardStats {
   totalAgents: number;
   activeAgents: number;
+  suspendedAgents: number;
+  pendingAgents: number;
+  newAgentsLast30Days: number;
   totalInspections: number;
-  pendingTickets: number;
+  inspectionsThisMonth: number;
+  pendingTickets?: number;
+  openTickets: number;
   lowStockItems: number;
-  avgScore: number;
+  avgScore?: number;
+  avgAgentScore: number;
   goldAgents: number;
   silverAgents: number;
   watchlistAgents: number;
   highRiskAgents: number;
+  totalViolationsThisMonth: number;
+  documents: {
+    total: number;
+    valid: number;
+    expiringSoon: number;
+    expired: number;
+    suspended: number;
+  };
+}
+
+export interface AgentDocStatus {
+  agentId: number;
+  hasExpired: boolean;
+  hasExpiringSoon: boolean;
+  hasSuspended: boolean;
+  total: number;
 }
 
 export interface AgentRankingItem {

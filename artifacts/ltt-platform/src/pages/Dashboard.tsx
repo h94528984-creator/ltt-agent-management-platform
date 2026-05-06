@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { DashboardStats, AgentRankingItem, RiskDistributionItem, AgentRequest } from "@/lib/api";
-import { Users, ClipboardCheck, AlertTriangle, TrendingUp, Star, Award, Eye, ShieldAlert } from "lucide-react";
+import { Link } from "wouter";
+import { Users, ClipboardCheck, AlertTriangle, TrendingUp, Star, Award, Eye, ShieldAlert, FileText, Clock } from "lucide-react";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
@@ -82,16 +83,41 @@ export default function Dashboard() {
         <p className="text-muted-foreground text-sm mt-1">نظرة عامة على أداء المبيعات بالتجزئة — المنطقة الغربية</p>
       </div>
 
+      {stats?.documents && (stats.documents.expired > 0 || stats.documents.expiringSoon > 0) && (
+        <Link href="/documents">
+          <div className={`rounded-xl p-4 border-2 cursor-pointer hover:shadow-md transition-all ${stats.documents.expired > 0 ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200"}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stats.documents.expired > 0 ? "bg-red-500" : "bg-amber-500"}`}>
+                  <AlertTriangle className="text-white" size={20} />
+                </div>
+                <div>
+                  <h3 className={`font-semibold ${stats.documents.expired > 0 ? "text-red-900" : "text-amber-900"}`}>تنبيه التراخيص والمستندات</h3>
+                  <p className={`text-sm ${stats.documents.expired > 0 ? "text-red-700" : "text-amber-700"}`}>
+                    {stats.documents.expired > 0 && <>يوجد <b>{stats.documents.expired}</b> مستند منتهٍ</>}
+                    {stats.documents.expired > 0 && stats.documents.expiringSoon > 0 && " — "}
+                    {stats.documents.expiringSoon > 0 && <>و <b>{stats.documents.expiringSoon}</b> سيُنتهي خلال 30 يوم</>}
+                  </p>
+                </div>
+              </div>
+              <span className={`text-sm font-medium ${stats.documents.expired > 0 ? "text-red-700" : "text-amber-700"}`}>
+                مراجعة الآن ←
+              </span>
+            </div>
+          </div>
+        </Link>
+      )}
+
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard icon={Users} label="إجمالي الوكلاء" value={stats.totalAgents} color="bg-primary" />
           <KpiCard icon={ClipboardCheck} label="التفتيشات" value={stats.totalInspections} color="bg-blue-500" />
-          <KpiCard icon={AlertTriangle} label="تذاكر معلقة" value={stats.pendingTickets} color="bg-orange-500" />
-          <KpiCard icon={TrendingUp} label="متوسط التقييم" value={`${stats.avgScore ?? 0}%`} color="bg-green-500" />
+          <KpiCard icon={AlertTriangle} label="تذاكر معلقة" value={stats.openTickets ?? stats.pendingTickets ?? 0} color="bg-orange-500" />
+          <KpiCard icon={TrendingUp} label="متوسط التقييم" value={`${stats.avgAgentScore ?? stats.avgScore ?? 0}%`} color="bg-green-500" />
+          <KpiCard icon={FileText} label="مستندات سارية" value={stats.documents?.valid ?? 0} color="bg-emerald-500" />
+          <KpiCard icon={Clock} label="قارب على الانتهاء" value={stats.documents?.expiringSoon ?? 0} color="bg-amber-500" />
+          <KpiCard icon={ShieldAlert} label="مستندات منتهية" value={stats.documents?.expired ?? 0} color="bg-red-500" />
           <KpiCard icon={Award} label="وكلاء ذهبيون" value={stats.goldAgents} color="bg-amber-400" />
-          <KpiCard icon={Star} label="وكلاء فضيون" value={stats.silverAgents} color="bg-slate-500" />
-          <KpiCard icon={Eye} label="قائمة المراقبة" value={stats.watchlistAgents} color="bg-orange-400" />
-          <KpiCard icon={ShieldAlert} label="خطر عالي" value={stats.highRiskAgents} color="bg-red-500" />
         </div>
       )}
 

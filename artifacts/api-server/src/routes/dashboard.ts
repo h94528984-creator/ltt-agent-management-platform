@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, agentsTable, inspectionsTable, salesLogsTable, ticketsTable, inventoryTable, agentScoresTable, notificationsTable } from "@workspace/db";
+import { db, agentsTable, inspectionsTable, salesLogsTable, ticketsTable, inventoryTable, agentScoresTable, notificationsTable, agentDocumentsTable } from "@workspace/db";
 import { eq, gte, lte, count, avg, sql } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -37,6 +37,14 @@ router.get("/dashboard/stats", async (_req, res): Promise<void> => {
     avgScore: avg(agentScoresTable.finalScore),
   }).from(agentScoresTable);
 
+  const [docCounts] = await db.select({
+    total: sql<number>`COUNT(*)`,
+    valid: sql<number>`COUNT(*) FILTER (WHERE status = 'valid')`,
+    expiringSoon: sql<number>`COUNT(*) FILTER (WHERE status = 'expiring_soon')`,
+    expired: sql<number>`COUNT(*) FILTER (WHERE status = 'expired')`,
+    suspended: sql<number>`COUNT(*) FILTER (WHERE status = 'suspended')`,
+  }).from(agentDocumentsTable);
+
   res.json({
     totalAgents: Number(agentCounts.total),
     activeAgents: Number(agentCounts.active),
@@ -51,6 +59,13 @@ router.get("/dashboard/stats", async (_req, res): Promise<void> => {
     goldAgents: Number(scoreCounts.gold),
     totalViolationsThisMonth: Number(inspectionCounts.violationsThisMonth),
     avgAgentScore: scoreCounts.avgScore ? Math.round(Number(scoreCounts.avgScore) * 10) / 10 : 0,
+    documents: {
+      total: Number(docCounts?.total ?? 0),
+      valid: Number(docCounts?.valid ?? 0),
+      expiringSoon: Number(docCounts?.expiringSoon ?? 0),
+      expired: Number(docCounts?.expired ?? 0),
+      suspended: Number(docCounts?.suspended ?? 0),
+    },
   });
 });
 

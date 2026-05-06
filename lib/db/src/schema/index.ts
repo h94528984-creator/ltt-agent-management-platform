@@ -7,3 +7,4 @@ export * from "./inventory";
 export * from "./agentScores";
 export * from "./notifications";
 export * from "./agentRequests";
+export * from "./agentDocuments";
