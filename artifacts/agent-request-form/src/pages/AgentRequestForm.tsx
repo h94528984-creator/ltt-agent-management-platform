@@ -386,26 +386,25 @@ export default function AgentRequestForm() {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
               <h2 className="font-semibold text-gray-900">{isDealerChannel ? "التراخيص والجاهزية" : "القناة والخدمات"}</h2>
               {isDealerChannel ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.documentsComplete} onChange={(e) => setForm({ ...form, documentsComplete: e.target.value })}>
-                    <option value="true">الوثائق مكتملة</option>
-                    <option value="false">الوثائق ناقصة</option>
-                  </select>
-                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.brandIdentityCompliant} onChange={(e) => setForm({ ...form, brandIdentityCompliant: e.target.value })}>
-                    <option value="true">الهوية التجارية متوافقة</option>
-                    <option value="false">الهوية التجارية غير متوافقة</option>
-                  </select>
-                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasSignboard} onChange={(e) => setForm({ ...form, hasSignboard: e.target.value })}>
-                    <option value="true">يوجد لافتة</option>
-                    <option value="false">لا توجد لافتة</option>
-                  </select>
-                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasDevices} onChange={(e) => setForm({ ...form, hasDevices: e.target.value })}>
-                    <option value="true">الأجهزة متوفرة</option>
-                    <option value="false">الأجهزة غير متوفرة</option>
-                  </select>
-                </div>
-              ) : (
                 <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <select className="w-full rounded-xl border border-gray-200 p-3" value={form.documentsComplete} onChange={(e) => setForm({ ...form, documentsComplete: e.target.value })}>
+                      <option value="true">الوثائق مكتملة</option>
+                      <option value="false">الوثائق ناقصة</option>
+                    </select>
+                    <select className="w-full rounded-xl border border-gray-200 p-3" value={form.brandIdentityCompliant} onChange={(e) => setForm({ ...form, brandIdentityCompliant: e.target.value })}>
+                      <option value="true">الهوية التجارية متوافقة</option>
+                      <option value="false">الهوية التجارية غير متوافقة</option>
+                    </select>
+                    <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasSignboard} onChange={(e) => setForm({ ...form, hasSignboard: e.target.value })}>
+                      <option value="true">يوجد لافتة</option>
+                      <option value="false">لا توجد لافتة</option>
+                    </select>
+                    <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasDevices} onChange={(e) => setForm({ ...form, hasDevices: e.target.value })}>
+                      <option value="true">الأجهزة متوفرة</option>
+                      <option value="false">الأجهزة غير متوفرة</option>
+                    </select>
+                  </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <input className="w-full rounded-xl border border-gray-200 p-3" value={form.fullAddress} onChange={(e) => setForm({ ...form, fullAddress: e.target.value })} placeholder="العنوان الكامل" />
                     <input className="w-full rounded-xl border border-gray-200 p-3" value={form.locationDescription} onChange={(e) => setForm({ ...form, locationDescription: e.target.value })} placeholder="وصف القناة / الفرع" />
@@ -419,6 +418,11 @@ export default function AgentRequestForm() {
                     ))}
                   </div>
                 </>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <input className="w-full rounded-xl border border-gray-200 p-3" value={form.fullAddress} onChange={(e) => setForm({ ...form, fullAddress: e.target.value })} placeholder="العنوان الكامل" />
+                  <input className="w-full rounded-xl border border-gray-200 p-3" value={form.locationDescription} onChange={(e) => setForm({ ...form, locationDescription: e.target.value })} placeholder="وصف القناة / الفرع" />
+                </div>
               )}
             </div>
 
