@@ -12,7 +12,7 @@ import Documents from "@/pages/Documents";
 import Analytics from "@/pages/Analytics";
 import Tickets from "@/pages/Tickets";
 import Entities from "@/pages/Entities";
-import Inventory from "@/pages/Inventory";
+import MapView from "@/pages/MapView";
 import Users from "@/pages/Users";
 import { isAuthenticated, clearAuth } from "@/lib/auth";
 
@@ -62,7 +62,7 @@ function AppLayout() {
           <Route path="/analytics" component={Analytics} />
           <Route path="/tickets" component={Tickets} />
           <Route path="/entities" component={Entities} />
-          <Route path="/inventory" component={Inventory} />
+          <Route path="/map" component={MapView} />
           <Route path="/users" component={Users} />
           <Route component={NotFound} />
         </Switch>

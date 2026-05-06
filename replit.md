@@ -104,6 +104,8 @@ pnpm --filter @workspace/db run push            # Push DB schema to PostgreSQL
 
 ## Recent Changes
 
+- **Interactive Map page** (`/map`, replaces "المخزون" in sidebar): Leaflet map showing all agents (190) + company entities (service_center / fixed_pos / mobile_van) with color-coded markers, type filters with counts, popups with contact info + Google Maps link, and CSV export of filtered points (`pages/MapView.tsx`).
+- **Ticket map picker**: Reusable `MapPickerModal` (Leaflet) lets admin click on map to set ticket lat/lng. Wired into `Tickets.tsx` alongside the existing GPS button. Leaflet CSS loaded in `main.tsx`.
 - **Form ↔ Entities sync**: Inspection form's ServiceCenterSelector / FixedPosSelector now fetch from `/api/agent-requests?entityType=...` (via `useEntityList` hook in `AgentRequestForm.tsx`) instead of hardcoded files. Static `serviceCenters.ts` / `fixedPosList.ts` deleted; their content seeded into `agent_requests` (status=approved, request_id `LTT-SC-00X` / `LTT-FP-001`). Adding/editing/cancelling a company entity in the management Entities page is now reflected immediately in the field form.
 
 - **Tickets — preset titles + auto-fill**: CreateTicketModal replaces free-text title with 5 fixed tiles (🔍 تفتيش/ ➕ وكيل جديد / 🏢 مركز خدمات / 🏪 نقطة بيع ثابتة / 🚐 سيارة بيع متنقلة). Selecting a preset shows linked-entity dropdown (filtered by entityType) which auto-fills locationName + lat/lng + agentId.
