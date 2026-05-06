@@ -84,7 +84,15 @@ pnpm --filter @workspace/db run push            # Push DB schema to PostgreSQL
 ## Seeded Data
 
 - **19 users** (real LTT team members) with default password `LTT@2024`
-- **12 agents** across Tripoli region
+- **190 real dealers** across the Western Region — imported from `artifacts/agent-request-form/src/data/agentsList.ts` via `pnpm --filter @workspace/scripts run seed-dealers`
 - **10 inventory items** (SIM cards, recharge cards, devices, FTTH equipment)
 - **7 tickets** covering technical, compliance, billing, and stock issues
-- **Agent scores** with Gold/Silver/Watchlist/High_Risk classifications
+- **Agent scores** with Gold/Silver/Watchlist/High_Risk classifications (only for dealers that have been scored)
+
+## Recent Changes
+
+- Unified dealer database: `agents` table now has `city`, `address`, `phone`, `email` columns
+- `agent_requests` table has new `agent_id` column linking inspection reports to dealer records
+- Agents page: full CRUD (Add/Edit/Delete), city/status/type filters, CSV export, inspection history per dealer
+- Inspections page: CSV export of filtered results
+- Seed script `scripts/src/seedDealers.ts` is excluded from typecheck (one-off; runs via tsx)

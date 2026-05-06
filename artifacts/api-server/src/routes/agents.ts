@@ -36,6 +36,10 @@ router.post("/agents", async (req, res): Promise<void> => {
   }
   const [agent] = await db.insert(agentsTable).values({
     ...parsed.data,
+    city: parsed.data.city ?? null,
+    address: parsed.data.address ?? null,
+    phone: parsed.data.phone ?? null,
+    email: parsed.data.email ?? null,
     contractStart: parsed.data.contractStart ?? null,
     contractEnd: parsed.data.contractEnd ?? null,
     assignedSalesRepId: parsed.data.assignedSalesRepId ?? null,
@@ -105,6 +109,10 @@ router.patch("/agents/:id", async (req, res): Promise<void> => {
   const d = parsed.data;
   if (d.name != null) updateData.name = d.name;
   if (d.location != null) updateData.location = d.location;
+  if (d.city !== undefined) updateData.city = d.city;
+  if (d.address !== undefined) updateData.address = d.address;
+  if (d.phone !== undefined) updateData.phone = d.phone;
+  if (d.email !== undefined) updateData.email = d.email;
   if (d.type != null) updateData.type = d.type;
   if (d.status != null) updateData.status = d.status;
   if (d.notes !== undefined) updateData.notes = d.notes;

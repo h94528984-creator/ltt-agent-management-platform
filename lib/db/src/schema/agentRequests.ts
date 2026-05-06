@@ -1,10 +1,15 @@
 import { pgTable, text, serial, timestamp, integer, doublePrecision, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { agentsTable } from "./agents";
 
 export const agentRequestsTable = pgTable("agent_requests", {
   id: serial("id").primaryKey(),
   requestId: text("request_id").notNull().unique(),
+
+  // FK link to existing agent in master DB (nullable — new dealers won't have it)
+  // ON DELETE SET NULL: deleting a dealer preserves historical inspection records
+  agentId: integer("agent_id").references(() => agentsTable.id, { onDelete: "set null" }),
 
   // LTT Representative (employee filling the form)
   representativeName: text("representative_name").notNull(),

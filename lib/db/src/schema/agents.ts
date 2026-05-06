@@ -5,7 +5,11 @@ import { z } from "zod/v4";
 export const agentsTable = pgTable("agents", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  location: text("location").notNull(),
+  location: text("location").notNull().default(""),
+  city: text("city"),
+  address: text("address"),
+  phone: text("phone"),
+  email: text("email"),
   type: text("type").notNull().default("dealer"),
   contractStart: timestamp("contract_start", { withTimezone: true }),
   contractEnd: timestamp("contract_end", { withTimezone: true }),

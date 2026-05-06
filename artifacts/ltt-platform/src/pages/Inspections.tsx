@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import type { AgentRequest } from "@/lib/api";
-import { Search, Filter, Eye, CheckCircle, XCircle, Clock, ChevronDown } from "lucide-react";
+import { Search, Eye, CheckCircle, XCircle, Clock, ChevronDown, Download } from "lucide-react";
+import { exportCsv } from "@/lib/exportCsv";
 
 const STATUS_OPTIONS = [
   { value: "", label: "جميع الحالات" },
@@ -193,11 +194,55 @@ export default function Inspections() {
 
   const summary = { total: records.length, pending: records.filter((r) => r.status === "pending").length, approved: records.filter((r) => r.status === "approved").length, rejected: records.filter((r) => r.status === "rejected").length };
 
+  function exportToCsv() {
+    exportCsv(
+      filtered.map((r) => ({
+        requestId: r.requestId,
+        agentName: r.agentName,
+        city: r.city,
+        mobile: r.mobile,
+        representative: r.representativeName,
+        readiness: r.readinessScore ?? "",
+        sales: r.salesScore ?? "",
+        compliance: r.complianceScore ?? "",
+        finalScore: r.finalScore ?? "",
+        status: r.status === "approved" ? "مقبول" : r.status === "rejected" ? "مرفوض" : "قيد المراجعة",
+        date: new Date(r.createdAt).toLocaleDateString("ar-LY"),
+        notes: r.notes ?? "",
+      })),
+      [
+        { key: "requestId", label: "رقم الطلب" },
+        { key: "agentName", label: "اسم الوكيل" },
+        { key: "city", label: "المدينة" },
+        { key: "mobile", label: "الجوال" },
+        { key: "representative", label: "المفتش" },
+        { key: "readiness", label: "الجاهزية" },
+        { key: "sales", label: "المبيعات" },
+        { key: "compliance", label: "الامتثال" },
+        { key: "finalScore", label: "النتيجة النهائية" },
+        { key: "status", label: "الحالة" },
+        { key: "date", label: "التاريخ" },
+        { key: "notes", label: "ملاحظات" },
+      ],
+      `inspections-${new Date().toISOString().slice(0, 10)}.csv`,
+    );
+  }
+
   return (
     <div className="p-6 space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">تقارير التفتيش الميداني</h1>
-        <p className="text-muted-foreground text-sm mt-1">استعراض وإدارة جميع تقارير الجولات التفتيشية</p>
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">تقارير التفتيش الميداني</h1>
+          <p className="text-muted-foreground text-sm mt-1">استعراض وإدارة جميع تقارير الجولات التفتيشية</p>
+        </div>
+        <button
+          onClick={exportToCsv}
+          disabled={filtered.length === 0}
+          className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm hover:bg-muted disabled:opacity-50 transition-colors"
+        >
+          <Download size={15} />
+          تصدير CSV
+        </button>
       </div>
 
       <div className="grid grid-cols-4 gap-4">

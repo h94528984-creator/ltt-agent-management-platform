@@ -1,0 +1,83 @@
+IMPORTANT CORRECTION:
+
+Do NOT generate fake dealers, dummy analytics, placeholder values, or hallucinated data.
+
+The system must strictly use ONLY the real existing dealer records already available inside the current inspection app database.
+
+CRITICAL REQUIREMENTS:
+
+1. The inspection app already contains approximately:
+   190 real dealers / agents.
+
+2. Use ONLY those existing dealers as the master database.
+
+3. Do NOT create random dealers or fake statistics.
+
+4. The new Dealer Request module must connect directly to the existing inspection database.
+
+5. The Operations Dashboard must read data dynamically from:
+
+* Existing inspection records
+* Existing dealers
+* Existing field visits
+* Existing evaluations
+
+6. The dashboard KPIs must be calculated from real database records only.
+
+7. Connect:
+   "طلبات الوكلاء الجدد"
+   with:
+   "نظام الجولات الميدانية"
+
+using shared dealer IDs and unified database relations.
+
+8. The workflow should be:
+
+New Dealer Request
+→ Dealer Profile Created
+→ Added to Existing Dealer Database
+→ Assigned for Inspection
+→ Appears in Dashboard
+→ Linked to Inspection Reports
+
+9. VERY IMPORTANT:
+   Avoid creating separate isolated apps.
+
+All modules must operate as ONE integrated operational platform.
+
+10. Connect the following systems together:
+
+* نظام عمليات الموزعين — LTT
+* نظام الجولات الميدانية
+* لوحة التحكم التشغيلية
+* تقارير الجولات والتقييم
+* طلبات الوكلاء الجدد
+
+11. Existing dealer records inside inspection app are the source of truth.
+
+12. Dashboard charts must dynamically display:
+
+* Real dealer counts
+* Real inspection scores
+* Real regional distribution
+* Real high-risk dealers
+* Real pending inspections
+
+13. Fix current analytics issue where charts display:
+    undefined
+
+14. Ensure all charts and statistics load correctly from database queries.
+
+15. Maintain Arabic RTL support and preserve all existing production data.
+
+16. Do not duplicate dealers already existing in inspection system.
+
+17. Link dealer profiles with:
+
+* Inspection history
+* Uploaded photos
+* Scores
+* Reports
+* Request status
+
+18. The final result should behave like one enterprise telecom operations platform, not multiple disconnected apps.

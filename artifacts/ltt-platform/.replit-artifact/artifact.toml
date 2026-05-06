@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "منصة LTT — نظام إدارة المبيعات"
+title = "نظام متابعة  الوكلاء وموظفي وحدة عمليات المراكز والوكلاء"
 version = "1.0.0"
 id = "artifacts/ltt-platform"
 router = "path"

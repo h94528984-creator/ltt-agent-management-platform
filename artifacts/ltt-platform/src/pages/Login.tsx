@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api } from "@/lib/api";
-import { saveAuth, type AuthResponse } from "@/lib/auth";
+import { saveAuth } from "@/lib/auth";
 import type { AuthResponse as AR } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 

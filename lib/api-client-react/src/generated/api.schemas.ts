@@ -74,6 +74,14 @@ export interface Agent {
   id: number;
   name: string;
   location: string;
+  /** @nullable */
+  city?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  email?: string | null;
   type: string;
   /** @nullable */
   contractStart?: string | null;
@@ -95,6 +103,14 @@ export interface Agent {
 export interface CreateAgentBody {
   name: string;
   location: string;
+  /** @nullable */
+  city?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  email?: string | null;
   type: string;
   /** @nullable */
   contractStart?: string | null;
@@ -116,6 +132,14 @@ export interface UpdateAgentBody {
   name?: string | null;
   /** @nullable */
   location?: string | null;
+  /** @nullable */
+  city?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  email?: string | null;
   /** @nullable */
   type?: string | null;
   /** @nullable */

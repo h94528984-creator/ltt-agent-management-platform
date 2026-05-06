@@ -50,7 +50,7 @@ export default function Users() {
 
   const filtered = users.filter((u) => {
     const q = search.toLowerCase();
-    return !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (ROLE_LABELS[u.role] ?? u.role).includes(q);
+    return !q || (u.fullName ?? "").toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (ROLE_LABELS[u.role] ?? u.role).includes(q);
   });
 
   return (

@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/form/"
-title = "نموذج طلب وكيل جديد"
+title = "التفتيش على الوكلاء"
 version = "1.0.0"
 id = "artifacts/agent-request-form"
 router = "path"

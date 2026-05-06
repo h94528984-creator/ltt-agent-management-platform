@@ -32,6 +32,7 @@ export const api = {
 export interface AgentRequest {
   id: number;
   requestId: string;
+  agentId: number | null;
   representativeName: string;
   representativeEmail: string | null;
   agentName: string;
