@@ -53,6 +53,13 @@ const CLASS_COLORS: Record<string, string> = {
 const CLASS_LABELS: Record<string, string> = {
   gold: "ذهبي", silver: "فضي", watchlist: "مراقبة", high_risk: "خطر عالي",
 };
+const AGENT_CLASS_INFO: Record<string, { label: string; guarantee: string; maxBranches: string; color: string }> = {
+  A: { label: "Class A", guarantee: "25,000 د.ل.", maxBranches: "25 فرعاً", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  B: { label: "Class B", guarantee: "20,000 د.ل.", maxBranches: "15 فرعاً", color: "bg-sky-100 text-sky-700 border-sky-200" },
+  C: { label: "Class C", guarantee: "15,000 د.ل.", maxBranches: "7 فروع", color: "bg-amber-100 text-amber-700 border-amber-200" },
+  D: { label: "Class D", guarantee: "10,000 د.ل.", maxBranches: "3 فروع", color: "bg-orange-100 text-orange-700 border-orange-200" },
+  E: { label: "Class E", guarantee: "5,000 د.ل.", maxBranches: "1 فرع فقط", color: "bg-red-100 text-red-700 border-red-200" },
+};
 
 export default function Agents() {
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -201,6 +208,8 @@ export default function Agents() {
         {loading ? <div className="col-span-3 py-16 text-center text-muted-foreground">جاري التحميل...</div> : visibleAgents.length === 0 ? <div className="col-span-3 py-16 text-center text-muted-foreground">لا توجد نتائج</div> : visibleAgents.map((agent) => {
           const score = scores.get(agent.id);
           const inspCount = inspectionsForAgent(agent).length;
+          const classKey = (agent.type === "dealer" ? "A" : "A");
+          const classInfo = AGENT_CLASS_INFO[classKey] ?? AGENT_CLASS_INFO.A;
           return <div key={agent.id} className="bg-white border border-border rounded-xl p-5 shadow-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all relative group" onClick={() => setSelected(agent)}>
             <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
               <button onClick={(e) => { e.stopPropagation(); setEditing(agent); }} className="p-1.5 bg-white border border-border rounded hover:bg-muted" title="تعديل"><Pencil size={12} /></button>
@@ -224,6 +233,11 @@ export default function Agents() {
               {agent.email && <div className="flex items-center gap-1.5 text-muted-foreground truncate"><Mail size={13} /><span className="ltr text-xs truncate" dir="ltr">{agent.email}</span></div>}
             </div>
             <div className="mt-4 pt-3 border-t border-border flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${classInfo.color}`}>{classInfo.label}</span>
+                <span>{classInfo.guarantee}</span>
+                <span>{classInfo.maxBranches}</span>
+              </div>
               {score ? <><div className="flex items-center gap-1 text-xs text-muted-foreground"><Star size={12} /><span>التقييم</span></div><span className={`font-bold ${score.totalScore >= 85 ? "text-amber-500" : score.totalScore >= 70 ? "text-blue-500" : score.totalScore >= 50 ? "text-orange-500" : "text-red-500"}`}>{score.totalScore}/100</span></> : <span className="text-xs text-muted-foreground">لم يُقيَّم بعد</span>}
               <div className="flex items-center gap-2">
                 {inspCount > 0 && <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-medium"><Eye size={11} />{inspCount}</span>}
