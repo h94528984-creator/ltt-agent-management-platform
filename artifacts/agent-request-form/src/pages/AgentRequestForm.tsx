@@ -479,20 +479,28 @@ export default function AgentRequestForm() {
                   <option value="medium">حركة المنطقة التجارية متوسطة</option>
                   <option value="low">حركة المنطقة التجارية منخفضة</option>
                 </select>
-                <input
-                  className="w-full rounded-xl border border-gray-200 p-3"
-                  value={form.marketDensitySameCity}
-                  onChange={(e) => setForm({ ...form, marketDensitySameCity: e.target.value })}
-                  placeholder="منافسو نفس المدينة (اكتب يدويًا)"
-                />
-                <input
-                  className="w-full rounded-xl border border-gray-200 p-3"
-                  value={form.marketDensitySameStreet}
-                  onChange={(e) => setForm({ ...form, marketDensitySameStreet: e.target.value })}
-                  placeholder="منافسو نفس الشارع (اكتب يدويًا)"
-                />
-                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.transactionVolumeAdsl} onChange={(e) => setForm({ ...form, transactionVolumeAdsl: e.target.value })} placeholder="معاملات ADSL" />
-                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.transactionVolume4g} onChange={(e) => setForm({ ...form, transactionVolume4g: e.target.value })} placeholder="معاملات 4G" />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">عدد الوكلاء في نفس المدينة</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-full rounded-xl border border-gray-200 p-3"
+                    value={form.marketDensitySameCity}
+                    onChange={(e) => setForm({ ...form, marketDensitySameCity: e.target.value })}
+                    placeholder="أدخل العدد"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">عدد المنافسين في نفس الشارع</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-full rounded-xl border border-gray-200 p-3"
+                    value={form.marketDensitySameStreet}
+                    onChange={(e) => setForm({ ...form, marketDensitySameStreet: e.target.value })}
+                    placeholder="أدخل العدد"
+                  />
+                </div>
               </div>
             </div>
           </div>
