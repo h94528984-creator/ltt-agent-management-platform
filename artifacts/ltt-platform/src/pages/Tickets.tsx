@@ -35,6 +35,17 @@ interface User {
   role: string;
 }
 
+interface Agent {
+  id: number;
+  name: string;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  status: string;
+}
+
+type EntityChoice = { id: number; label: string; sub: string; latitude: number | null; longitude: number | null; agentId: number | null };
+
 const PRIORITY_COLORS: Record<string, string> = {
   low: "bg-blue-100 text-blue-700",
   medium: "bg-yellow-100 text-yellow-700",
@@ -55,7 +66,7 @@ function mapsUrl(lat: number, lng: number) {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
 
-function CreateTicketModal({ users, entities, onClose, onCreated }: { users: User[]; entities: AgentRequest[]; onClose: () => void; onCreated: (t: Ticket) => void }) {
+function CreateTicketModal({ users, entities, agents, onClose, onCreated }: { users: User[]; entities: AgentRequest[]; agents: Agent[]; onClose: () => void; onCreated: (t: Ticket) => void }) {
   const [titleIdx, setTitleIdx] = useState<number | null>(null);
   const [linkedEntityId, setLinkedEntityId] = useState("");
   const [description, setDescription] = useState("");
@@ -70,8 +81,14 @@ function CreateTicketModal({ users, entities, onClose, onCreated }: { users: Use
   const [error, setError] = useState<string | null>(null);
 
   const preset = titleIdx != null ? TICKET_TITLE_PRESETS[titleIdx] : null;
-  const entityChoices = preset
-    ? entities.filter((e) => e.entityType === preset.entityType && e.status !== "cancelled")
+  const entityChoices: EntityChoice[] = preset
+    ? preset.entityType === "agent"
+      ? agents
+          .filter((a) => a.status !== "inactive")
+          .map((a) => ({ id: a.id, label: a.name, sub: a.city ?? "—", latitude: a.latitude, longitude: a.longitude, agentId: a.id }))
+      : entities
+          .filter((e) => e.entityType === preset.entityType && e.status !== "cancelled")
+          .map((e) => ({ id: e.id, label: e.agentName ?? "—", sub: e.city ?? "—", latitude: e.latitude, longitude: e.longitude, agentId: e.agentId }))
     : [];
 
   function pickPreset(i: number) {
@@ -83,12 +100,12 @@ function CreateTicketModal({ users, entities, onClose, onCreated }: { users: Use
   function pickEntity(idStr: string) {
     setLinkedEntityId(idStr);
     if (!idStr) { setLocationName(""); setLatitude(""); setLongitude(""); setAgentId(""); return; }
-    const e = entities.find((x) => String(x.id) === idStr);
-    if (!e) return;
-    setLocationName(`${e.agentName ?? ""}${e.city ? " — " + e.city : ""}`);
-    if (e.latitude != null) setLatitude(String(e.latitude));
-    if (e.longitude != null) setLongitude(String(e.longitude));
-    if (e.agentId != null) setAgentId(String(e.agentId));
+    const c = entityChoices.find((x) => String(x.id) === idStr);
+    if (!c) return;
+    setLocationName(`${c.label}${c.sub && c.sub !== "—" ? " — " + c.sub : ""}`);
+    if (c.latitude != null) setLatitude(String(c.latitude));
+    if (c.longitude != null) setLongitude(String(c.longitude));
+    if (c.agentId != null) setAgentId(String(c.agentId));
   }
 
   function captureGps() {
@@ -153,7 +170,7 @@ function CreateTicketModal({ users, entities, onClose, onCreated }: { users: Use
               <select value={linkedEntityId} onChange={(e) => pickEntity(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white">
                 <option value="">— إدخال يدوي —</option>
                 {entityChoices.map((ent) => (
-                  <option key={ent.id} value={ent.id}>{ent.agentName} — {ent.city}</option>
+                  <option key={ent.id} value={ent.id}>{ent.label} — {ent.sub}</option>
                 ))}
               </select>
             </div>
@@ -211,6 +228,7 @@ export default function Tickets() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [entities, setEntities] = useState<AgentRequest[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -225,7 +243,8 @@ export default function Tickets() {
       api.get<Ticket[]>("/tickets").catch(() => [] as Ticket[]),
       api.get<User[]>("/users").catch(() => [] as User[]),
       api.get<AgentRequest[]>("/agent-requests").catch(() => [] as AgentRequest[]),
-    ]).then(([t, u, e]) => { setTickets(t); setUsers(u); setEntities(e); }).finally(() => setLoading(false));
+      api.get<Agent[]>("/agents").catch(() => [] as Agent[]),
+    ]).then(([t, u, e, a]) => { setTickets(t); setUsers(u); setEntities(e); setAgents(a); }).finally(() => setLoading(false));
   }, []);
 
   const userMap = new Map(users.map((u) => [u.id, u]));
@@ -369,7 +388,7 @@ export default function Tickets() {
       </div>
 
       {showCreate && (
-        <CreateTicketModal users={users} entities={entities} onClose={() => setShowCreate(false)} onCreated={(t) => setTickets((prev) => [t, ...prev])} />
+        <CreateTicketModal users={users} entities={entities} agents={agents} onClose={() => setShowCreate(false)} onCreated={(t) => setTickets((prev) => [t, ...prev])} />
       )}
     </div>
   );
