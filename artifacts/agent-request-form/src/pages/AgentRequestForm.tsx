@@ -77,6 +77,7 @@ type FormData = {
   documentsComplete: string;
   brandIdentityCompliant: string;
   notes: string;
+  services: string[];
 };
 
 type Scores = { readiness: number; sales: number; compliance: number; final: number };
@@ -282,6 +283,7 @@ export default function AgentRequestForm() {
     documentsComplete: "true",
     brandIdentityCompliant: "true",
     notes: "",
+    services: [],
   });
   const [photos, setPhotos] = useState<PhotoState>({ sitePhotos: [], interiorPhotos: [], equipmentPhotos: [] });
   const [photoPreviews, setPhotoPreviews] = useState<PhotoPreviewState>({ sitePhotos: [], interiorPhotos: [], equipmentPhotos: [] });
@@ -309,6 +311,15 @@ export default function AgentRequestForm() {
     setPhotoPreviews((prev) => ({
       ...prev,
       [key]: next.map((file) => file.type.startsWith("image/") ? URL.createObjectURL(file) : file.name),
+    }));
+  }, []);
+
+  const toggleService = useCallback((service: string) => {
+    setForm((prev) => ({
+      ...prev,
+      services: prev.services.includes(service)
+        ? prev.services.filter((item) => item !== service)
+        : [...prev.services, service],
     }));
   }, []);
 
@@ -365,11 +376,7 @@ export default function AgentRequestForm() {
               <div className="grid gap-3 md:grid-cols-2">
                 {SERVICES_AVAILABLE.map((s) => (
                   <label key={s.value} className="flex items-center gap-2 rounded-xl border border-gray-200 p-3">
-                    <input type="checkbox" checked={form.notes.includes(s.value)} onChange={() => {
-                      const has = form.notes.includes(s.value);
-                      const next = has ? form.notes.replace(s.value, "") : `${form.notes} ${s.value}`.trim();
-                      setForm({ ...form, notes: next });
-                    }} />
+                    <input type="checkbox" checked={form.services.includes(s.value)} onChange={() => toggleService(s.value)} />
                     <span>{s.label}</span>
                   </label>
                 ))}
@@ -422,13 +429,17 @@ export default function AgentRequestForm() {
 
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-              <h2 className="font-semibold text-gray-900 mb-3">الموقع</h2>
+              <h2 className="font-semibold text-gray-900 mb-3">الموقع الجغرافي</h2>
               <div className="h-80 rounded-xl overflow-hidden border border-gray-200">
                 <MapContainer center={[32.8872, 13.1913]} zoom={6} className="h-full w-full">
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                   <MapPicker onPick={(lat, lng) => setForm((prev) => ({ ...prev, latitude: String(lat), longitude: String(lng) }))} />
                   {form.latitude && form.longitude && <Marker position={[Number(form.latitude), Number(form.longitude)]} />}
                 </MapContainer>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 mt-4">
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} placeholder="خط العرض" />
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} placeholder="خط الطول" />
               </div>
             </div>
 
@@ -449,6 +460,40 @@ export default function AgentRequestForm() {
                   onRemove={(i) => handleRemovePhoto(cat.key, i)}
                 />
               ))}
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
+              <h2 className="font-semibold text-gray-900">الموقع والجاهزية التشغيلية</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.internetQuality} onChange={(e) => setForm({ ...form, internetQuality: e.target.value })}>
+                  <option value="good">جيد</option>
+                  <option value="medium">متوسط</option>
+                  <option value="weak">ضعيف</option>
+                </select>
+                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.areaTraffic} onChange={(e) => setForm({ ...form, areaTraffic: e.target.value })}>
+                  <option value="high">حركة المنطقة التجارية مرتفعة</option>
+                  <option value="medium">حركة المنطقة التجارية متوسطة</option>
+                  <option value="low">حركة المنطقة التجارية منخفضة</option>
+                </select>
+                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.marketDensitySameCity} onChange={(e) => setForm({ ...form, marketDensitySameCity: e.target.value })}>
+                  <option value="0">منافسون نفس المدينة: 0</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5+</option>
+                </select>
+                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.marketDensitySameStreet} onChange={(e) => setForm({ ...form, marketDensitySameStreet: e.target.value })}>
+                  <option value="0">نفس الشارع: 0</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5+</option>
+                </select>
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.transactionVolumeAdsl} onChange={(e) => setForm({ ...form, transactionVolumeAdsl: e.target.value })} placeholder="معاملات ADSL" />
+                <input className="w-full rounded-xl border border-gray-200 p-3" value={form.transactionVolume4g} onChange={(e) => setForm({ ...form, transactionVolume4g: e.target.value })} placeholder="معاملات 4G" />
+              </div>
             </div>
           </div>
         </div>
