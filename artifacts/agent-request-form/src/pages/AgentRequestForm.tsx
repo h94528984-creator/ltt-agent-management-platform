@@ -380,6 +380,7 @@ export default function AgentRequestForm() {
                 <select className="w-full rounded-xl border border-gray-200 p-3" value={form.activityType} onChange={(e) => setForm({ ...form, activityType: e.target.value })}>
                   {ACTIVITY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
+                <input className="w-full rounded-xl border border-gray-200 p-3 md:col-span-2" value={form.fullAddress} onChange={(e) => setForm({ ...form, fullAddress: e.target.value })} placeholder="العنوان الكامل" />
               </div>
             </div>
 
@@ -420,7 +421,6 @@ export default function AgentRequestForm() {
                 </>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
-                  <input className="w-full rounded-xl border border-gray-200 p-3" value={form.fullAddress} onChange={(e) => setForm({ ...form, fullAddress: e.target.value })} placeholder="العنوان الكامل" />
                   <input className="w-full rounded-xl border border-gray-200 p-3" value={form.locationDescription} onChange={(e) => setForm({ ...form, locationDescription: e.target.value })} placeholder="وصف القناة / الفرع" />
                 </div>
               )}
