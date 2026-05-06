@@ -5,7 +5,7 @@ import fs from "fs";
 import { randomBytes } from "crypto";
 import { db, agentDocumentsTable, documentHistoryTable, agentsTable, DOCUMENT_TYPES, DOCUMENT_STATUSES } from "@workspace/db";
 import { eq, desc, and, sql, inArray, lte, gte, isNotNull, type SQL } from "drizzle-orm";
-import { z } from "zod/v4";
+import * as zod from "zod";
 
 const router: IRouter = Router();
 
@@ -31,17 +31,17 @@ const upload = multer({
   },
 });
 
-const docTypeEnum = z.enum(DOCUMENT_TYPES);
-const docStatusEnum = z.enum(DOCUMENT_STATUSES);
+const docTypeEnum = zod.enum(DOCUMENT_TYPES);
+const docStatusEnum = zod.enum(DOCUMENT_STATUSES);
 
-const createBody = z.object({
-  agentId: z.coerce.number().int().positive(),
+const createBody = zod.object({
+  agentId: zod.coerce.number().int().positive(),
   docType: docTypeEnum,
-  docNumber: z.string().nullish(),
-  issuer: z.string().nullish(),
-  issueDate: z.string().nullish(),
-  expiryDate: z.string().nullish(),
-  notes: z.string().nullish(),
+  docNumber: zod.string().nullish(),
+  issuer: zod.string().nullish(),
+  issueDate: zod.string().nullish(),
+  expiryDate: zod.string().nullish(),
+  notes: zod.string().nullish(),
   status: docStatusEnum.optional(),
 });
 

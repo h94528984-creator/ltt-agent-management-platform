@@ -308,6 +308,7 @@ export default function AgentRequestForm() {
   }, [selectedAgent]);
 
   const scores = calcScores(form);
+  const isDealerChannel = form.activityType === "agent_main" || form.activityType === "agent_sub";
 
   const handleAddPhotos = useCallback((key: PhotoCatKey, list: FileList | null) => {
     if (!list) return;
@@ -387,29 +388,55 @@ export default function AgentRequestForm() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-              <h2 className="font-semibold text-gray-900 mb-3">التراخيص والجاهزية</h2>
-              <div className="grid gap-4 md:grid-cols-2">
-                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.documentsComplete} onChange={(e) => setForm({ ...form, documentsComplete: e.target.value })}>
-                  <option value="true">الوثائق مكتملة</option>
-                  <option value="false">الوثائق ناقصة</option>
-                </select>
-                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.brandIdentityCompliant} onChange={(e) => setForm({ ...form, brandIdentityCompliant: e.target.value })}>
-                  <option value="true">الهوية التجارية متوافقة</option>
-                  <option value="false">الهوية التجارية غير متوافقة</option>
-                </select>
+            {isDealerChannel ? (
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                <h2 className="font-semibold text-gray-900 mb-3">التراخيص والجاهزية</h2>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.documentsComplete} onChange={(e) => setForm({ ...form, documentsComplete: e.target.value })}>
+                    <option value="true">الوثائق مكتملة</option>
+                    <option value="false">الوثائق ناقصة</option>
+                  </select>
+                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.brandIdentityCompliant} onChange={(e) => setForm({ ...form, brandIdentityCompliant: e.target.value })}>
+                    <option value="true">الهوية التجارية متوافقة</option>
+                    <option value="false">الهوية التجارية غير متوافقة</option>
+                  </select>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 mt-4">
+                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasSignboard} onChange={(e) => setForm({ ...form, hasSignboard: e.target.value })}>
+                    <option value="true">يوجد لافتة</option>
+                    <option value="false">لا توجد لافتة</option>
+                  </select>
+                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasDevices} onChange={(e) => setForm({ ...form, hasDevices: e.target.value })}>
+                    <option value="true">الأجهزة متوفرة</option>
+                    <option value="false">الأجهزة غير متوفرة</option>
+                  </select>
+                </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-2 mt-4">
-                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasSignboard} onChange={(e) => setForm({ ...form, hasSignboard: e.target.value })}>
-                  <option value="true">يوجد لافتة</option>
-                  <option value="false">لا توجد لافتة</option>
-                </select>
-                <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasDevices} onChange={(e) => setForm({ ...form, hasDevices: e.target.value })}>
-                  <option value="true">الأجهزة متوفرة</option>
-                  <option value="false">الأجهزة غير متوفرة</option>
-                </select>
+            ) : (
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                <h2 className="font-semibold text-gray-900 mb-3">التزامات موظفينا</h2>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.documentsComplete} onChange={(e) => setForm({ ...form, documentsComplete: e.target.value })}>
+                    <option value="true">الالتزامات مكتملة</option>
+                    <option value="false">الالتزامات ناقصة</option>
+                  </select>
+                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.brandIdentityCompliant} onChange={(e) => setForm({ ...form, brandIdentityCompliant: e.target.value })}>
+                    <option value="true">متوافق مع التزامات الشركة</option>
+                    <option value="false">غير متوافق</option>
+                  </select>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 mt-4">
+                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasSignboard} onChange={(e) => setForm({ ...form, hasSignboard: e.target.value })}>
+                    <option value="true">اللافتة مطابقة</option>
+                    <option value="false">اللافتة غير مطابقة</option>
+                  </select>
+                  <select className="w-full rounded-xl border border-gray-200 p-3" value={form.hasDevices} onChange={(e) => setForm({ ...form, hasDevices: e.target.value })}>
+                    <option value="true">الأجهزة جاهزة</option>
+                    <option value="false">الأجهزة غير جاهزة</option>
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
               <h2 className="font-semibold text-gray-900 mb-3">إرسال/تصدير</h2>
