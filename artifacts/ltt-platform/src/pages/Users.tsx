@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { getUser } from "@/lib/auth";
-import { Search, UserCheck, UserX, Trash2 } from "lucide-react";
+import { Search, UserCheck, UserX, Trash2, RefreshCw } from "lucide-react";
 
 interface User {
   id: number;
@@ -41,6 +41,29 @@ export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [reseeding, setReseeding] = useState(false);
+  const isAdmin = getUser()?.role === "admin";
+
+  async function handleReseed() {
+    if (!window.confirm(
+      "تحذير: سيتم حذف جميع البيانات الحالية في قاعدة البيانات واستبدالها بآخر لقطة من قاعدة التطوير.\n\nهل تريد المتابعة؟"
+    )) return;
+    setReseeding(true);
+    try {
+      const res = await api.post<{ ok: boolean; counts: { agents: string; reqs: string; users: string } }>(
+        "/admin/reseed",
+        {},
+      );
+      window.alert(
+        `تمت المزامنة بنجاح:\n- الوكلاء: ${res.counts.agents}\n- الكيانات/الطلبات: ${res.counts.reqs}\n- المستخدمون: ${res.counts.users}\n\nسيتم تحديث الصفحة الآن.`
+      );
+      window.location.reload();
+    } catch (err) {
+      window.alert("فشلت المزامنة: " + (err instanceof Error ? err.message : "خطأ غير معروف"));
+    } finally {
+      setReseeding(false);
+    }
+  }
 
   useEffect(() => {
     api.get<User[]>("/users")
@@ -56,9 +79,22 @@ export default function Users() {
 
   return (
     <div className="p-6 space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">إدارة المستخدمين</h1>
-        <p className="text-muted-foreground text-sm mt-1">فريق العمل وصلاحياتهم في النظام</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">إدارة المستخدمين</h1>
+          <p className="text-muted-foreground text-sm mt-1">فريق العمل وصلاحياتهم في النظام</p>
+        </div>
+        {isAdmin && (
+          <button
+            onClick={handleReseed}
+            disabled={reseeding}
+            className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            title="إعادة تحميل البيانات من اللقطة المضمّنة (يحذف البيانات الحالية)"
+          >
+            <RefreshCw size={16} className={reseeding ? "animate-spin" : ""} />
+            {reseeding ? "جارِ المزامنة..." : "مزامنة من التطوير"}
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-4">

@@ -12,6 +12,7 @@ import notificationsRouter from "./notifications";
 import dashboardRouter from "./dashboard";
 import agentRequestsRouter from "./agentRequests";
 import documentsRouter from "./documents";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(notificationsRouter);
 router.use(dashboardRouter);
 router.use(agentRequestsRouter);
 router.use(documentsRouter);
+router.use(adminRouter);
 
 export default router;
