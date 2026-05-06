@@ -133,6 +133,18 @@ function calcScores(f: FormData): Scores {
   return { readiness, sales, compliance, final };
 }
 
+function getServiceScore(services: string[]) {
+  let score = 0;
+  if (services.includes("FTTH")) score += 30;
+  if (services.includes("FWA")) score += 20;
+  if (services.includes("4G")) score += 20;
+  if (services.includes("ADSL")) score += 10;
+  if (services.includes("eSIM")) score += 10;
+  if (services.includes("FIXD_VOLTE")) score += 5;
+  if (services.includes("RECHARGE")) score += 5;
+  return Math.min(100, score);
+}
+
 function ScoreBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="space-y-1">
@@ -308,6 +320,7 @@ export default function AgentRequestForm() {
   }, [selectedAgent]);
 
   const scores = calcScores(form);
+  const serviceScore = getServiceScore(form.services);
   const isDealerChannel = form.activityType === "agent_main" || form.activityType === "agent_sub";
 
   const handleAddPhotos = useCallback((key: PhotoCatKey, list: FileList | null) => {
@@ -448,6 +461,11 @@ export default function AgentRequestForm() {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
               <h2 className="font-semibold text-gray-900 mb-3">ملاحظات</h2>
               <textarea className="w-full rounded-xl border border-gray-200 p-3 min-h-32" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <h2 className="font-semibold text-gray-900 mb-3">تقييم نوع الخدمات</h2>
+              <ScoreBar label="الخدمات" value={serviceScore} color="bg-indigo-500" />
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
