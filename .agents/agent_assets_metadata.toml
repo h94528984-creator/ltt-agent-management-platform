@@ -24,3 +24,9 @@ id = "cZE9XDAf1ZlAijLRXo-vU"
 uri = "file://exports/ltt-platform-ai-prompt.json"
 type = "unspecified"
 title = "أمر JSON لإعادة بناء المشروع بالذكاء الاصطناعي"
+
+[[outputs]]
+id = "55d0Cc8e-LfBn4hFydil0"
+uri = "file://exports/PROJECT_INDEX.md"
+type = "text"
+title = "فهرس المشروع الشامل وطبقات الحماية"
