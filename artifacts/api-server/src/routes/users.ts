@@ -97,6 +97,10 @@ router.patch("/users/:id", async (req, res): Promise<void> => {
   if (parsed.data.role != null) updateData.role = parsed.data.role;
   if (parsed.data.department !== undefined) updateData.department = parsed.data.department;
   if (parsed.data.isActive != null) updateData.isActive = parsed.data.isActive;
+  const rawPassword = (req.body as { password?: unknown }).password;
+  if (typeof rawPassword === "string" && rawPassword.length >= 4) {
+    updateData.passwordHash = hashPassword(rawPassword);
+  }
   const [user] = await db.update(usersTable).set(updateData).where(eq(usersTable.id, params.data.id)).returning();
   if (!user) {
     res.status(404).json({ error: "User not found" });

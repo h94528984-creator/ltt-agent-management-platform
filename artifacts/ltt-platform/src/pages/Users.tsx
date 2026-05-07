@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { getUser } from "@/lib/auth";
-import { Search, UserCheck, UserX, Trash2, RefreshCw } from "lucide-react";
+import { Search, UserCheck, UserX, Trash2, RefreshCw, Plus, Pencil } from "lucide-react";
+import UserModal from "@/components/UserModal";
 
 interface User {
   id: number;
@@ -42,7 +43,27 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [reseeding, setReseeding] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const isAdmin = getUser()?.role === "admin";
+
+  function openCreate() {
+    setEditingUser(null);
+    setModalOpen(true);
+  }
+  function openEdit(u: User) {
+    setEditingUser(u);
+    setModalOpen(true);
+  }
+  function handleSaved(saved: User) {
+    setUsers((prev) => {
+      const idx = prev.findIndex((u) => u.id === saved.id);
+      if (idx === -1) return [...prev, saved];
+      const copy = [...prev];
+      copy[idx] = saved;
+      return copy;
+    });
+  }
 
   async function handleReseed() {
     if (!window.confirm(
@@ -85,15 +106,24 @@ export default function Users() {
           <p className="text-muted-foreground text-sm mt-1">فريق العمل وصلاحياتهم في النظام</p>
         </div>
         {isAdmin && (
-          <button
-            onClick={handleReseed}
-            disabled={reseeding}
-            className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            title="إعادة تحميل البيانات من اللقطة المضمّنة (يحذف البيانات الحالية)"
-          >
-            <RefreshCw size={16} className={reseeding ? "animate-spin" : ""} />
-            {reseeding ? "جارِ المزامنة..." : "مزامنة من التطوير"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={openCreate}
+              className="flex items-center gap-2 bg-primary hover:opacity-90 text-white rounded-lg px-4 py-2 text-sm font-medium"
+            >
+              <Plus size={16} />
+              إضافة مستخدم
+            </button>
+            <button
+              onClick={handleReseed}
+              disabled={reseeding}
+              className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              title="إعادة تحميل البيانات من اللقطة المضمّنة (يحذف البيانات الحالية)"
+            >
+              <RefreshCw size={16} className={reseeding ? "animate-spin" : ""} />
+              {reseeding ? "جارِ المزامنة..." : "مزامنة من التطوير"}
+            </button>
+          </div>
         )}
       </div>
 
@@ -163,7 +193,16 @@ export default function Users() {
                 <span className="text-xs text-muted-foreground">
                   {new Date(user.createdAt).toLocaleDateString("ar-LY")}
                 </span>
-                {getUser()?.role === "admin" && getUser()?.id !== user.id && (
+                {isAdmin && (
+                  <button
+                    onClick={() => openEdit(user)}
+                    className="p-1.5 hover:bg-blue-50 rounded"
+                    title="تعديل المستخدم"
+                  >
+                    <Pencil size={14} className="text-blue-600" />
+                  </button>
+                )}
+                {isAdmin && getUser()?.id !== user.id && (
                   <button
                     onClick={async () => {
                       if (!confirm(`هل تريد حذف المستخدم "${user.fullName}"؟`)) return;
@@ -185,6 +224,14 @@ export default function Users() {
           </div>
         ))}
       </div>
+
+      {modalOpen && (
+        <UserModal
+          user={editingUser}
+          onClose={() => setModalOpen(false)}
+          onSaved={handleSaved}
+        />
+      )}
     </div>
   );
 }
