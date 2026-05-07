@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "-fOYxEXPY255JwwXR7vwY"
+uri = "file://exports/ltt-platform-project.zip"
+type = "unspecified"
+title = "LTT Platform — كامل المشروع (ZIP)"
