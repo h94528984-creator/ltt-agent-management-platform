@@ -6,3 +6,9 @@ id = "-fOYxEXPY255JwwXR7vwY"
 uri = "file://exports/ltt-platform-project.zip"
 type = "unspecified"
 title = "LTT Platform — كامل المشروع (ZIP)"
+
+[[outputs]]
+id = "4F3rjawNfEhOdk0wGfSt_"
+uri = "file://exports/ltt-platform-full-with-assets.zip"
+type = "unspecified"
+title = "LTT Platform — النسخة الكاملة للمطور (مع الصور والمرفقات)"
