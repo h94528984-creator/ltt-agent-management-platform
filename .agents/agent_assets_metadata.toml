@@ -12,3 +12,9 @@ id = "4F3rjawNfEhOdk0wGfSt_"
 uri = "file://exports/ltt-platform-full-with-assets.zip"
 type = "unspecified"
 title = "LTT Platform — النسخة الكاملة للمطور (مع الصور والمرفقات)"
+
+[[outputs]]
+id = "FsqiYsuhnv5Bm0x038iCy"
+uri = "file://exports/ltt-platform-complete.zip"
+type = "unspecified"
+title = "LTT Platform — المشروع الكامل (مع تاريخ Git وكل الملفات)"
