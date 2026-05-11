@@ -13,6 +13,7 @@ import Analytics from "@/pages/Analytics";
 import Tickets from "@/pages/Tickets";
 import Entities from "@/pages/Entities";
 import MapView from "@/pages/MapView";
+import PublicMap from "@/pages/PublicMap";
 import Users from "@/pages/Users";
 import Reports from "@/pages/Reports";
 import Inbox from "@/pages/Inbox";
@@ -132,6 +133,12 @@ function AppLayout() {
     setShowTicketsPopup(false);
     setAssignedTickets([]);
     navigate("/");
+  }
+
+  const path = typeof window !== "undefined" ? window.location.pathname : "/";
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  if (path === `${base}/share/map` || path === `${base}/share/map/`) {
+    return <PublicMap />;
   }
 
   if (!authed) {

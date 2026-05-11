@@ -5,9 +5,7 @@ import "leaflet.heat";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { api } from "@/lib/api";
-import type { AgentRequest } from "@/lib/api";
-import { Download, MapPin, Filter, Flame, Share2, Check } from "lucide-react";
+import { MapPin, Filter, Flame } from "lucide-react";
 
 function HeatLayer({ points }: { points: [number, number, number][] }) {
   const map = useMap();
@@ -30,14 +28,15 @@ delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIcon
 L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, shadowUrl: markerShadow });
 
 interface Agent { id: number; name: string; city: string | null; phone: string | null; status: string; type: string | null; channelType: string | null; latitude: number | null; longitude: number | null }
+interface Entity { id: number; entityType: string | null; agentName: string | null; city: string | null; mobile: string | null; representativeName: string | null; status: string; latitude: number | null; longitude: number | null }
 
 type MarkerKind = "agent" | "service_center" | "fixed_pos" | "mobile_van";
 
-const KIND_META: Record<MarkerKind, { label: string; color: string; emoji: string }> = {
-  agent:          { label: "وكلاء",            color: "#16a34a", emoji: "🟢" },
-  service_center: { label: "مراكز خدمات",      color: "#2563eb", emoji: "🔵" },
-  fixed_pos:      { label: "نقاط بيع ثابتة",    color: "#7c3aed", emoji: "🟣" },
-  mobile_van:     { label: "سيارات متنقلة",     color: "#ea580c", emoji: "🟠" },
+const KIND_META: Record<MarkerKind, { label: string; color: string }> = {
+  agent:          { label: "وكلاء",            color: "#16a34a" },
+  service_center: { label: "مراكز خدمات",      color: "#2563eb" },
+  fixed_pos:      { label: "نقاط بيع ثابتة",    color: "#7c3aed" },
+  mobile_van:     { label: "سيارات متنقلة",     color: "#ea580c" },
 };
 
 function makeIcon(color: string) {
@@ -56,54 +55,24 @@ const ICONS: Record<MarkerKind, L.DivIcon> = {
   mobile_van: makeIcon(KIND_META.mobile_van.color),
 };
 
-type MapPoint = {
-  kind: MarkerKind;
-  id: number;
-  name: string;
-  city: string;
-  phone: string;
-  status: string;
-  extra: string;
-  lat: number;
-  lng: number;
-};
+type MapPoint = { kind: MarkerKind; id: number; name: string; city: string; phone: string; extra: string; lat: number; lng: number };
 
-function downloadCsv(filename: string, rows: Record<string, string | number>[]) {
-  if (rows.length === 0) return;
-  const headers = Object.keys(rows[0]);
-  const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const csv = [headers.join(","), ...rows.map((r) => headers.map((h) => escape(r[h])).join(","))].join("\n");
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
-
-export default function MapView() {
+export default function PublicMap() {
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [entities, setEntities] = useState<AgentRequest[]>([]);
+  const [entities, setEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState(true);
   const [enabled, setEnabled] = useState<Record<MarkerKind, boolean>>({
     agent: true, service_center: true, fixed_pos: true, mobile_van: true,
   });
   const [heatmap, setHeatmap] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  function shareLink() {
-    const url = `${window.location.origin}/share/map`;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      window.prompt("انسخ الرابط:", url);
-    });
-  }
 
   useEffect(() => {
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    const apiBase = base.startsWith("/") ? "/api" : "/api";
+    void apiBase;
     Promise.all([
-      api.get<Agent[]>("/agents").catch(() => [] as Agent[]),
-      api.get<AgentRequest[]>("/agent-requests").catch(() => [] as AgentRequest[]),
+      fetch("/api/agents").then(r => r.ok ? r.json() : []).catch(() => []) as Promise<Agent[]>,
+      fetch("/api/agent-requests").then(r => r.ok ? r.json() : []).catch(() => []) as Promise<Entity[]>,
     ]).then(([a, e]) => { setAgents(a); setEntities(e); }).finally(() => setLoading(false));
   }, []);
 
@@ -112,14 +81,14 @@ export default function MapView() {
       .filter((a) => a.latitude != null && a.longitude != null)
       .map((a) => ({
         kind: "agent" as const, id: a.id, name: a.name, city: a.city ?? "—", phone: a.phone ?? "—",
-        status: a.status, extra: a.channelType ?? a.type ?? "—",
+        extra: a.channelType ?? a.type ?? "—",
         lat: Number(a.latitude), lng: Number(a.longitude),
       }));
     const fromEntities: MapPoint[] = entities
       .filter((e) => e.entityType !== "agent" && e.entityType !== "inspection" && e.latitude != null && e.longitude != null && e.status !== "cancelled")
       .map((e) => ({
         kind: e.entityType as MarkerKind, id: e.id, name: e.agentName ?? "—", city: e.city ?? "—", phone: e.mobile ?? "—",
-        status: e.status, extra: e.representativeName ?? "—",
+        extra: e.representativeName ?? "—",
         lat: Number(e.latitude), lng: Number(e.longitude),
       }));
     return [...fromAgents, ...fromEntities];
@@ -137,58 +106,37 @@ export default function MapView() {
     ? [filtered.reduce((s, p) => s + p.lat, 0) / filtered.length, filtered.reduce((s, p) => s + p.lng, 0) / filtered.length]
     : [32.0, 13.5];
 
-  function exportAll() {
-    downloadCsv(`ltt-locations-${new Date().toISOString().slice(0, 10)}.csv`, filtered.map((p) => ({
-      "النوع": KIND_META[p.kind].label,
-      "الاسم": p.name,
-      "المدينة": p.city,
-      "الهاتف": p.phone,
-      "تفاصيل": p.extra,
-      "الحالة": p.status,
-      "خط العرض": p.lat,
-      "خط الطول": p.lng,
-      "رابط الخرائط": `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`,
-    })));
-  }
-
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><MapPin size={24} /> الخريطة التفاعلية</h1>
-          <p className="text-muted-foreground text-sm mt-1">جميع مواقع الوكلاء وكيانات الشركة على خريطة واحدة</p>
+    <div className="min-h-screen bg-gray-50 flex flex-col" dir="rtl">
+      <header className="bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white px-4 py-3 flex items-center gap-3 shadow-md">
+        <img src="/company-logo.png" alt="LTT" className="h-10 w-10 object-contain shrink-0 bg-white/10 rounded-lg p-1" />
+        <div className="flex-1 min-w-0">
+          <h1 className="text-sm sm:text-lg font-bold leading-tight flex items-center gap-2">
+            <MapPin size={18} /> خريطة الوكلاء والمراكز — LTT
+          </h1>
+          <p className="text-[11px] sm:text-xs text-blue-50">Libya Telecom &amp; Technology · المنطقة الغربية</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={shareLink}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm border ${copied ? "bg-green-500 text-white border-green-500" : "bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white border-transparent hover:opacity-90"}`}>
-            {copied ? <><Check size={16} /> تم نسخ الرابط</> : <><Share2 size={16} /> مشاركة الخريطة</>}
-          </button>
-          <button onClick={() => setHeatmap((v) => !v)}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm border ${heatmap ? "bg-orange-500 text-white border-orange-500" : "bg-white border-border hover:bg-muted"}`}>
-            <Flame size={16} /> {heatmap ? "إخفاء الخريطة الحرارية" : "خريطة حرارية"}
-          </button>
-          <button onClick={exportAll} disabled={filtered.length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 disabled:opacity-50">
-            <Download size={16} /> تصدير البيانات ({filtered.length})
-          </button>
-        </div>
-      </div>
+      </header>
 
-      <div className="bg-white border border-border rounded-xl p-4 shadow-sm">
-        <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
-          <Filter size={14} /> فلترة حسب النوع
+      <div className="bg-white border-b border-gray-200 px-3 py-2">
+        <div className="flex items-center gap-2 mb-2 text-xs text-gray-600">
+          <Filter size={12} /> فلترة حسب النوع
+          <button onClick={() => setHeatmap((v) => !v)}
+            className={`mr-auto inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs border ${heatmap ? "bg-orange-500 text-white border-orange-500" : "bg-white border-gray-300 hover:bg-gray-50"}`}>
+            <Flame size={12} /> {heatmap ? "إخفاء الحرارية" : "خريطة حرارية"}
+          </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {(Object.keys(KIND_META) as MarkerKind[]).map((k) => {
             const meta = KIND_META[k];
             const active = enabled[k];
             return (
               <button key={k} type="button" onClick={() => setEnabled((p) => ({ ...p, [k]: !p[k] }))}
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 transition-all text-right ${active ? "border-primary bg-primary/5" : "border-border bg-muted/30 opacity-60"}`}>
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all text-right ${active ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-gray-50 opacity-60"}`}>
                 <span className="w-3 h-3 rounded-full shrink-0" style={{ background: meta.color }} />
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-foreground">{meta.label}</div>
-                  <div className="text-xs text-muted-foreground">{counts[k]} موقع</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium text-gray-900 truncate">{meta.label}</div>
+                  <div className="text-[10px] text-gray-500">{counts[k]} موقع</div>
                 </div>
               </button>
             );
@@ -196,11 +144,11 @@ export default function MapView() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden" style={{ height: "calc(100vh - 320px)", minHeight: 480 }}>
+      <div className="flex-1 min-h-0">
         {loading ? (
-          <div className="h-full flex items-center justify-center text-muted-foreground">جاري تحميل المواقع...</div>
+          <div className="h-full flex items-center justify-center text-gray-500 py-20">جاري تحميل المواقع...</div>
         ) : (
-          <MapContainer center={center} zoom={7} className="h-full w-full">
+          <MapContainer center={center} zoom={7} className="h-full w-full" style={{ minHeight: "calc(100vh - 200px)" }}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
             {heatmap && <HeatLayer points={filtered.map((p) => [p.lat, p.lng, 1])} />}
             {!heatmap && <LayerGroup>
@@ -213,7 +161,6 @@ export default function MapView() {
                       <div><span className="font-semibold">المدينة:</span> {p.city}</div>
                       <div><span className="font-semibold">الهاتف:</span> {p.phone}</div>
                       <div><span className="font-semibold">التفاصيل:</span> {p.extra}</div>
-                      <div><span className="font-semibold">الحالة:</span> {p.status}</div>
                       <a href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`} target="_blank" rel="noopener noreferrer"
                         className="inline-block mt-2 text-blue-600 hover:underline text-xs">📍 افتح في Google Maps</a>
                     </div>
@@ -224,6 +171,10 @@ export default function MapView() {
           </MapContainer>
         )}
       </div>
+
+      <footer className="bg-white border-t border-gray-200 px-4 py-2 text-center text-[11px] text-gray-500">
+        © Libya Telecom &amp; Technology — لوحة تحكم عمليات المراكز والوكلاء
+      </footer>
     </div>
   );
 }
