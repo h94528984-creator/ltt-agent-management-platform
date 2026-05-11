@@ -1,12 +1,30 @@
-import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, LayerGroup } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, LayerGroup, useMap } from "react-leaflet";
 import L from "leaflet";
+import "leaflet.heat";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { api } from "@/lib/api";
 import type { AgentRequest } from "@/lib/api";
-import { Download, MapPin, Filter } from "lucide-react";
+import { Download, MapPin, Filter, Flame } from "lucide-react";
+
+function HeatLayer({ points }: { points: [number, number, number][] }) {
+  const map = useMap();
+  const layerRef = useRef<L.Layer | null>(null);
+  useEffect(() => {
+    if (layerRef.current) map.removeLayer(layerRef.current);
+    if (points.length === 0) return;
+    const layer = (L as unknown as { heatLayer: (pts: [number, number, number][], opts?: object) => L.Layer }).heatLayer(points, {
+      radius: 30, blur: 25, maxZoom: 12,
+      gradient: { 0.2: "#3b82f6", 0.4: "#10b981", 0.6: "#f59e0b", 0.8: "#ef4444", 1.0: "#7f1d1d" },
+    });
+    layer.addTo(map);
+    layerRef.current = layer;
+    return () => { if (layerRef.current) map.removeLayer(layerRef.current); };
+  }, [map, points]);
+  return null;
+}
 
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, shadowUrl: markerShadow });
@@ -69,6 +87,7 @@ export default function MapView() {
   const [enabled, setEnabled] = useState<Record<MarkerKind, boolean>>({
     agent: true, service_center: true, fixed_pos: true, mobile_van: true,
   });
+  const [heatmap, setHeatmap] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -128,10 +147,16 @@ export default function MapView() {
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><MapPin size={24} /> الخريطة التفاعلية</h1>
           <p className="text-muted-foreground text-sm mt-1">جميع مواقع الوكلاء وكيانات الشركة على خريطة واحدة</p>
         </div>
-        <button onClick={exportAll} disabled={filtered.length === 0}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 disabled:opacity-50">
-          <Download size={16} /> تصدير البيانات ({filtered.length})
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setHeatmap((v) => !v)}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm border ${heatmap ? "bg-orange-500 text-white border-orange-500" : "bg-white border-border hover:bg-muted"}`}>
+            <Flame size={16} /> {heatmap ? "إخفاء الخريطة الحرارية" : "خريطة حرارية"}
+          </button>
+          <button onClick={exportAll} disabled={filtered.length === 0}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 disabled:opacity-50">
+            <Download size={16} /> تصدير البيانات ({filtered.length})
+          </button>
+        </div>
       </div>
 
       <div className="bg-white border border-border rounded-xl p-4 shadow-sm">
@@ -162,7 +187,8 @@ export default function MapView() {
         ) : (
           <MapContainer center={center} zoom={7} className="h-full w-full">
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
-            <LayerGroup>
+            {heatmap && <HeatLayer points={filtered.map((p) => [p.lat, p.lng, 1])} />}
+            {!heatmap && <LayerGroup>
               {filtered.map((p) => (
                 <Marker key={`${p.kind}-${p.id}`} position={[p.lat, p.lng]} icon={ICONS[p.kind]}>
                   <Popup>
@@ -179,7 +205,7 @@ export default function MapView() {
                   </Popup>
                 </Marker>
               ))}
-            </LayerGroup>
+            </LayerGroup>}
           </MapContainer>
         )}
       </div>

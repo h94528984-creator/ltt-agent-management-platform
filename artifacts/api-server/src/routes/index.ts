@@ -13,6 +13,10 @@ import dashboardRouter from "./dashboard";
 import agentRequestsRouter from "./agentRequests";
 import documentsRouter from "./documents";
 import adminRouter from "./admin";
+import auditLogRouter from "./auditLog";
+import myStatsRouter from "./myStats";
+import smartAlertsRouter from "./smartAlerts";
+import accountRouter from "./account";
 
 const router: IRouter = Router();
 
@@ -30,5 +34,9 @@ router.use(dashboardRouter);
 router.use(agentRequestsRouter);
 router.use(documentsRouter);
 router.use(adminRouter);
+router.use(auditLogRouter);
+router.use(myStatsRouter);
+router.use(smartAlertsRouter);
+router.use(accountRouter);
 
 export default router;

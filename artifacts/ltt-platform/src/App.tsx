@@ -15,6 +15,11 @@ import Entities from "@/pages/Entities";
 import MapView from "@/pages/MapView";
 import Users from "@/pages/Users";
 import Reports from "@/pages/Reports";
+import MyAccount from "@/pages/MyAccount";
+import MyStats from "@/pages/MyStats";
+import AuditLog from "@/pages/AuditLog";
+import Gallery from "@/pages/Gallery";
+import NotificationBell from "@/components/NotificationBell";
 import { isAuthenticated, clearAuth, getUser } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { Ticket as TicketIcon, X } from "lucide-react";
@@ -136,6 +141,9 @@ function AppLayout() {
     <div className="flex min-h-screen bg-background" dir="rtl">
       <Sidebar onLogout={handleLogout} />
       <main className="flex-1 overflow-auto">
+        <div className="bg-[hsl(220,55%,12%)] text-white px-6 py-2 flex items-center justify-end gap-3">
+          <NotificationBell />
+        </div>
         <Switch>
           <Route path="/" component={Dashboard} />
           {isAdmin && <Route path="/inspections" component={Inspections} />}
@@ -147,6 +155,10 @@ function AppLayout() {
           <Route path="/entities" component={Entities} />
           <Route path="/map" component={MapView} />
           <Route path="/users" component={Users} />
+          <Route path="/account" component={MyAccount} />
+          <Route path="/my-stats" component={MyStats} />
+          <Route path="/gallery" component={Gallery} />
+          {isAdmin && <Route path="/audit" component={AuditLog} />}
           <Route component={NotFound} />
         </Switch>
       </main>

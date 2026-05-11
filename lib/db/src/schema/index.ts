@@ -8,3 +8,4 @@ export * from "./agentScores";
 export * from "./notifications";
 export * from "./agentRequests";
 export * from "./agentDocuments";
+export * from "./auditLog";

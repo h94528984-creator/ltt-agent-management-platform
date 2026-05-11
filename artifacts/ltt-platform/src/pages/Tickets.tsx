@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import type { AgentRequest } from "@/lib/api";
-import { Search, ChevronDown, AlertCircle, Clock, CheckCircle2, Plus, X, MapPin, Navigation, Inbox, Trash2 } from "lucide-react";
+import { Search, ChevronDown, AlertCircle, Clock, CheckCircle2, Plus, X, MapPin, Navigation, Inbox, Trash2, LayoutGrid, List, ArrowLeft, ArrowRight } from "lucide-react";
 import { MapPickerModal } from "@/components/MapPicker";
 
 const TICKET_TITLE_PRESETS = [
@@ -252,6 +252,73 @@ function CreateTicketModal({ users, entities, agents, onClose, onCreated }: { us
   );
 }
 
+const KANBAN_COLUMNS: { key: string; label: string; color: string }[] = [
+  { key: "open", label: "مفتوحة", color: "bg-blue-500" },
+  { key: "in_progress", label: "قيد التنفيذ", color: "bg-yellow-500" },
+  { key: "resolved", label: "محلولة", color: "bg-green-500" },
+  { key: "closed", label: "مغلقة", color: "bg-gray-500" },
+];
+
+function KanbanBoard({ tickets, userMap, onMove, loading }: { tickets: Ticket[]; userMap: Map<number, User>; onMove: (t: Ticket, status: string) => void; loading: boolean }) {
+  if (loading) return <div className="text-center py-12 text-muted-foreground">جاري التحميل...</div>;
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" dir="rtl">
+      {KANBAN_COLUMNS.map((col, colIdx) => {
+        const items = tickets.filter((t) => t.status === col.key);
+        return (
+          <div key={col.key} className="bg-gray-50 rounded-xl border border-border flex flex-col" style={{ minHeight: 400 }}>
+            <div className="p-3 border-b border-border flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={`w-3 h-3 rounded-full ${col.color}`} />
+                <span className="font-bold text-sm">{col.label}</span>
+              </div>
+              <span className="text-xs bg-white px-2 py-0.5 rounded-full font-semibold">{items.length}</span>
+            </div>
+            <div className="flex-1 p-2 space-y-2 overflow-y-auto" style={{ maxHeight: "60vh" }}>
+              {items.length === 0 ? (
+                <div className="text-center text-xs text-muted-foreground py-8">لا توجد تذاكر</div>
+              ) : items.map((t) => {
+                const assignee = t.assignedToId ? userMap.get(t.assignedToId) : null;
+                const prevCol = KANBAN_COLUMNS[colIdx - 1];
+                const nextCol = KANBAN_COLUMNS[colIdx + 1];
+                return (
+                  <div key={t.id} className="bg-white rounded-lg border border-border p-3 shadow-sm hover:shadow-md transition">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="text-sm font-semibold text-foreground line-clamp-2">{t.title}</p>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${PRIORITY_COLORS[t.priority] ?? "bg-gray-100"}`}>
+                        {PRIORITY_LABELS[t.priority] ?? t.priority}
+                      </span>
+                    </div>
+                    {t.description && <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{t.description}</p>}
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground truncate">{assignee?.fullName ?? "غير مسند"}</span>
+                      <span className="text-muted-foreground text-[10px]">{new Date(t.createdAt).toLocaleDateString("ar-LY")}</span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-2 pt-2 border-t border-gray-100">
+                      {prevCol && (
+                        <button onClick={() => onMove(t, prevCol.key)} title={`نقل إلى: ${prevCol.label}`}
+                          className="flex-1 text-[10px] py-1 bg-gray-50 hover:bg-gray-100 rounded flex items-center justify-center gap-1">
+                          <ArrowRight size={10} /> {prevCol.label}
+                        </button>
+                      )}
+                      {nextCol && (
+                        <button onClick={() => onMove(t, nextCol.key)} title={`نقل إلى: ${nextCol.label}`}
+                          className="flex-1 text-[10px] py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded flex items-center justify-center gap-1">
+                          {nextCol.label} <ArrowLeft size={10} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Tickets() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -262,6 +329,16 @@ export default function Tickets() {
   const [statusFilter, setStatusFilter] = useState("");
   const [onlyMine, setOnlyMine] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [view, setView] = useState<"list" | "kanban">("list");
+
+  async function moveTicket(t: Ticket, newStatus: string) {
+    try {
+      const updated = await api.patch<Ticket>(`/tickets/${t.id}`, { status: newStatus });
+      setTickets((prev) => prev.map((x) => x.id === t.id ? updated : x));
+    } catch {
+      alert("تعذر تحديث حالة التذكرة");
+    }
+  }
 
   const userRaw = typeof window !== "undefined" ? localStorage.getItem("ltt_user") : null;
   const currentUserId = userRaw ? (JSON.parse(userRaw).id as number) : null;
@@ -300,10 +377,20 @@ export default function Tickets() {
           <h1 className="text-2xl font-bold text-foreground">نظام التذاكر</h1>
           <p className="text-muted-foreground text-sm mt-1">إدارة وتتبع مشكلات الوكلاء والبلاغات</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors">
-          <Plus size={16} />
-          إنشاء تذكرة جديدة
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="inline-flex border border-border rounded-lg overflow-hidden">
+            <button onClick={() => setView("list")} className={`px-3 py-2 text-xs flex items-center gap-1 ${view === "list" ? "bg-primary text-white" : "bg-white hover:bg-muted"}`}>
+              <List size={14} /> قائمة
+            </button>
+            <button onClick={() => setView("kanban")} className={`px-3 py-2 text-xs flex items-center gap-1 ${view === "kanban" ? "bg-primary text-white" : "bg-white hover:bg-muted"}`}>
+              <LayoutGrid size={14} /> لوحة
+            </button>
+          </div>
+          <button onClick={() => setShowCreate(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors">
+            <Plus size={16} />
+            إنشاء تذكرة جديدة
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
@@ -342,6 +429,9 @@ export default function Tickets() {
         </div>
       </div>
 
+      {view === "kanban" ? (
+        <KanbanBoard tickets={filtered} userMap={userMap} onMove={moveTicket} loading={loading} />
+      ) : (
       <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 border-b border-border">
@@ -433,6 +523,7 @@ export default function Tickets() {
           </tbody>
         </table>
       </div>
+      )}
 
       {showCreate && (
         <CreateTicketModal users={users} entities={entities} agents={agents} onClose={() => setShowCreate(false)} onCreated={(t) => setTickets((prev) => [t, ...prev])} />

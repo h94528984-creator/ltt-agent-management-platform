@@ -1,5 +1,5 @@
 import { Link, useRoute } from "wouter";
-import { LayoutDashboard, ClipboardList, Users, BarChart3, Map, Ticket, LogOut, UserCheck, FileText, Building2, FileBarChart } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Users, BarChart3, Map, Ticket, LogOut, UserCheck, FileText, Building2, FileBarChart, History, Image as ImageIcon, Activity, User as UserIcon } from "lucide-react";
 import { clearAuth, getUser } from "@/lib/auth";
 
 const navItems = [
@@ -13,6 +13,10 @@ const navItems = [
   { href: "/tickets", icon: Ticket, label: "التذاكر" },
   { href: "/map", icon: Map, label: "الخريطة التفاعلية" },
   { href: "/users", icon: UserCheck, label: "المستخدمون" },
+  { href: "/gallery", icon: ImageIcon, label: "معرض المرفقات" },
+  { href: "/audit", icon: History, label: "سجل النشاط", adminOnly: true },
+  { href: "/my-stats", icon: Activity, label: "إحصائياتي" },
+  { href: "/account", icon: UserIcon, label: "حسابي" },
 ];
 
 interface SidebarProps {

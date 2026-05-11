@@ -30,3 +30,14 @@ export function verifyToken(token: string): number | null {
     return null;
   }
 }
+
+export function getTokenIssuedAt(token: string): number | null {
+  try {
+    const decoded = Buffer.from(token, "base64").toString("utf-8");
+    const parts = decoded.split(":");
+    if (parts.length !== 3) return null;
+    return parseInt(parts[1], 10);
+  } catch {
+    return null;
+  }
+}
