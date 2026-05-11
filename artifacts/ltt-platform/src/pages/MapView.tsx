@@ -167,23 +167,25 @@ export default function MapView() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><MapPin size={24} /> الخريطة التفاعلية</h1>
-          <p className="text-muted-foreground text-sm mt-1">جميع مواقع الوكلاء وكيانات الشركة على خريطة واحدة</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2"><MapPin size={22} /> الخريطة التفاعلية</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">جميع مواقع الوكلاء وكيانات الشركة على خريطة واحدة</p>
+          </div>
           <button onClick={() => setShareOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white shadow-lg hover:opacity-90 ring-2 ring-orange-300/40">
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white shadow-lg hover:opacity-90 ring-2 ring-orange-300/40 shrink-0">
             <Share2 size={18} /> مشاركة الخريطة
           </button>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
           <button onClick={() => setHeatmap((v) => !v)}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm border ${heatmap ? "bg-orange-500 text-white border-orange-500" : "bg-white border-border hover:bg-muted"}`}>
-            <Flame size={16} /> {heatmap ? "إخفاء الخريطة الحرارية" : "خريطة حرارية"}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs sm:text-sm border ${heatmap ? "bg-orange-500 text-white border-orange-500" : "bg-white border-border hover:bg-muted"}`}>
+            <Flame size={14} /> {heatmap ? "إخفاء الحرارية" : "خريطة حرارية"}
           </button>
           <button onClick={exportAll} disabled={filtered.length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 disabled:opacity-50">
-            <Download size={16} /> تصدير البيانات ({filtered.length})
+            className="inline-flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-lg text-xs sm:text-sm hover:bg-primary/90 disabled:opacity-50">
+            <Download size={14} /> تصدير ({filtered.length})
           </button>
         </div>
       </div>

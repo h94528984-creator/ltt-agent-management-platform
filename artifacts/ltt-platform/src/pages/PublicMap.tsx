@@ -5,7 +5,7 @@ import "leaflet.heat";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import { MapPin, Filter, Flame } from "lucide-react";
+import { MapPin, Filter, Flame, Share2, Check } from "lucide-react";
 
 function HeatLayer({ points }: { points: [number, number, number][] }) {
   const map = useMap();
@@ -65,6 +65,23 @@ export default function PublicMap() {
     agent: true, service_center: true, fixed_pos: true, mobile_van: true,
   });
   const [heatmap, setHeatmap] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/share/map` : "";
+  const shareText = "خريطة الوكلاء والمراكز — Libya Telecom & Technology";
+
+  function copyLink() {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => { window.prompt("انسخ الرابط:", shareUrl); });
+  }
+
+  async function nativeShare() {
+    if (navigator.share) {
+      try { await navigator.share({ title: shareText, text: shareText, url: shareUrl }); setShareOpen(false); } catch { /* */ }
+    } else { copyLink(); }
+  }
 
   useEffect(() => {
     const base = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -108,15 +125,59 @@ export default function PublicMap() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" dir="rtl">
-      <header className="bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white px-4 py-3 flex items-center gap-3 shadow-md">
-        <img src="/company-logo.png" alt="LTT" className="h-10 w-10 object-contain shrink-0 bg-white/10 rounded-lg p-1" />
+      <header className="bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white px-3 py-2.5 flex items-center gap-2 shadow-md">
+        <img src="/company-logo.png" alt="LTT" className="h-9 w-9 object-contain shrink-0 bg-white/10 rounded-lg p-1" />
         <div className="flex-1 min-w-0">
-          <h1 className="text-sm sm:text-lg font-bold leading-tight flex items-center gap-2">
-            <MapPin size={18} /> خريطة الوكلاء والمراكز — LTT
+          <h1 className="text-sm sm:text-lg font-bold leading-tight flex items-center gap-1.5">
+            <MapPin size={16} /> خريطة الوكلاء والمراكز
           </h1>
-          <p className="text-[11px] sm:text-xs text-blue-50">Libya Telecom &amp; Technology · المنطقة الغربية</p>
+          <p className="text-[10px] sm:text-xs text-blue-50 truncate">Libya Telecom &amp; Technology</p>
         </div>
+        <button onClick={() => setShareOpen(true)}
+          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-[hsl(210,75%,28%)] hover:bg-blue-50 shadow">
+          <Share2 size={14} /> مشاركة
+        </button>
       </header>
+
+      {shareOpen && (
+        <div className="fixed inset-0 z-[1000] bg-black/50 flex items-center justify-center p-4" dir="rtl" onClick={() => setShareOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900 flex items-center gap-2"><Share2 size={18} /> مشاركة الخريطة</h3>
+              <button onClick={() => setShareOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500">✕</button>
+            </div>
+            <div className="flex gap-2 mb-4">
+              <input type="text" readOnly value={shareUrl} dir="ltr"
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs bg-gray-50 text-gray-700" />
+              <button onClick={copyLink}
+                className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0 ${copied ? "bg-green-500 text-white" : "bg-gray-900 text-white hover:bg-gray-800"}`}>
+                {copied ? <><Check size={14} /> تم</> : "نسخ"}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <a href={`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`} target="_blank" rel="noopener noreferrer"
+                onClick={() => setShareOpen(false)}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold bg-green-500 text-white hover:bg-green-600">
+                <span>💬</span> واتساب
+              </a>
+              <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer"
+                onClick={() => setShareOpen(false)}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold bg-blue-500 text-white hover:bg-blue-600">
+                <span>✈️</span> تيليجرام
+              </a>
+              <a href={`mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`}
+                onClick={() => setShareOpen(false)}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
+                <span>📧</span> البريد
+              </a>
+              <button onClick={nativeShare}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white hover:opacity-90">
+                <Share2 size={14} /> مشاركة أخرى
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white border-b border-gray-200 px-3 py-2">
         <div className="flex items-center gap-2 mb-2 text-xs text-gray-600">
