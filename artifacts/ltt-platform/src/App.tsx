@@ -14,7 +14,6 @@ import Tickets from "@/pages/Tickets";
 import Entities from "@/pages/Entities";
 import MapView from "@/pages/MapView";
 import Users from "@/pages/Users";
-import Assistant from "@/pages/Assistant";
 import { isAuthenticated, clearAuth, getUser } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { Ticket as TicketIcon, X } from "lucide-react";
@@ -146,7 +145,6 @@ function AppLayout() {
           <Route path="/entities" component={Entities} />
           <Route path="/map" component={MapView} />
           <Route path="/users" component={Users} />
-          <Route path="/assistant" component={Assistant} />
           <Route component={NotFound} />
         </Switch>
       </main>
