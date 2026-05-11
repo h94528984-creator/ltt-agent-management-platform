@@ -411,7 +411,7 @@ function MapPanel({ lat, lng, agentLat, agentLng, onChange }: {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-3">
+    <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5 space-y-3">
       <h2 className="font-semibold text-gray-900">📍 الموقع الجغرافي</h2>
       {hasAgentCoords && (
         <div className="flex items-center gap-2 rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
@@ -437,7 +437,7 @@ function MapPanel({ lat, lng, agentLat, agentLng, onChange }: {
         </button>
       </div>
       {gpsError && <p className="text-xs text-red-500 text-center">{gpsError}</p>}
-      <div className="h-64 rounded-xl overflow-hidden border border-gray-200">
+      <div className="h-44 sm:h-64 rounded-xl overflow-hidden border border-gray-200">
         <MapContainer center={mapCenter} zoom={lat && lng ? 12 : 6} key={`${lat}-${lng}`} className="h-full w-full">
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <MapPicker onPick={(la, ln) => onChange(String(la), String(ln))} />
@@ -508,23 +508,23 @@ function CompanyEntityForm({
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-      <div className="space-y-4">
+    <div className="grid gap-3 sm:gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="space-y-2.5 sm:space-y-4">
         {/* Service center picker — only in service_center mode */}
         {mode === "service_center" && (
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+          <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
             <label className="block text-sm font-semibold text-gray-700 mb-2">🏢 اختر مركز الخدمات</label>
             <ServiceCenterSelector selected={selectedCenter} onSelect={onSelectCenter} items={serviceCenters} />
           </div>
         )}
         {/* Fixed POS picker — only in fixed_pos mode */}
         {mode === "fixed_pos" && (
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+          <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
             <label className="block text-sm font-semibold text-gray-700 mb-2">🏪 اختر نقطة البيع الثابتة</label>
             <FixedPosSelector selected={selectedFixedPos} onSelect={onSelectFixedPos} items={fixedPosItems} />
           </div>
         )}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
           <div className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold mb-4 border-2 ${cfg.color}`}>
             <span>{cfg.icon}</span><span>{cfg.label}</span><span className="text-xs font-normal opacity-70">— {cfg.description}</span>
           </div>
@@ -556,7 +556,7 @@ function CompanyEntityForm({
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
           <h2 className="font-semibold text-gray-900 mb-4">الجاهزية التشغيلية</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <select className="w-full rounded-xl border border-gray-200 p-3 text-sm" value={form.hasSignboard} onChange={e => onChange({ hasSignboard: e.target.value })}>
@@ -591,12 +591,12 @@ function CompanyEntityForm({
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
           <label className="text-xs text-gray-500 mb-1 block">ملاحظات</label>
           <textarea className="w-full rounded-xl border border-gray-200 p-3 text-sm" rows={3} value={form.notes} onChange={e => onChange({ notes: e.target.value })} placeholder="أي ملاحظات إضافية..." />
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
           {result && (
             <div className={`rounded-xl p-3 mb-3 text-sm font-semibold ${result.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
               {result.msg}
@@ -608,9 +608,9 @@ function CompanyEntityForm({
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-2.5 sm:space-y-4">
         <MapPanel lat={form.latitude} lng={form.longitude} onChange={(la, ln) => onChange({ latitude: la, longitude: ln })} />
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5 space-y-4">
           <h2 className="font-semibold text-gray-900">المرفقات</h2>
           {PHOTO_CATS.map(cat => (
             <PhotoUploadSection key={cat.key} cat={cat} files={photos[cat.key]} previews={photoPreviews[cat.key]}
@@ -727,44 +727,42 @@ export default function AgentRequestForm() {
   const isCompanyMode = mode === "service_center" || mode === "fixed_pos" || mode === "mobile_van";
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6" dir="rtl">
-      <div className="mx-auto max-w-7xl space-y-5">
+    <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6 pb-24 sm:pb-6" dir="rtl">
+      <div className="mx-auto max-w-7xl space-y-2.5 sm:space-y-5">
 
         {/* Header */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-          <h1 className="text-2xl font-black text-gray-900">منصة متابعة عمليات المراكز والوكلاء</h1>
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm px-3 py-2.5 sm:p-5">
+          <h1 className="text-sm sm:text-2xl font-bold sm:font-black text-gray-900 leading-tight">منصة متابعة عمليات المراكز والوكلاء</h1>
         </div>
 
         {/* Mode Selector */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
-          <p className="text-sm font-semibold text-gray-600 mb-3">اختر نوع العملية:</p>
-          <div className="space-y-2">
-            {/* Agent operations — top row */}
-            <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-2.5 sm:p-4">
+          <p className="text-[11px] sm:text-sm font-semibold text-gray-600 mb-2 sm:mb-3">اختر نوع العملية:</p>
+          <div className="space-y-1.5 sm:space-y-2">
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-3">
               {(["inspection", "new_agent"] as const).map(m => {
                 const cfg = MODE_CONFIG[m];
                 const isActive = mode === m;
                 return (
                   <button key={m} type="button" onClick={() => setMode(m)}
-                    className={`rounded-xl border-2 px-4 py-4 text-sm font-semibold transition-all text-center ${isActive ? cfg.activeColor : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"}`}>
-                    <div className="text-2xl mb-1">{cfg.icon}</div>
-                    <div>{cfg.label}</div>
+                    className={`rounded-lg sm:rounded-xl border-2 px-2 py-2 sm:px-4 sm:py-4 text-xs sm:text-sm font-semibold transition-all text-center ${isActive ? cfg.activeColor : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"}`}>
+                    <div className="text-base sm:text-2xl sm:mb-1">{cfg.icon}</div>
+                    <div className="leading-tight">{cfg.label}</div>
                   </button>
                 );
               })}
             </div>
-            {/* Company entity operations — bottom row */}
-            <div className="border-t border-gray-100 pt-2">
-              <p className="text-xs text-gray-400 mb-2">كيانات موظفو الشركة:</p>
-              <div className="grid grid-cols-3 gap-3">
+            <div className="border-t border-gray-100 pt-1.5 sm:pt-2">
+              <p className="text-[10px] sm:text-xs text-gray-400 mb-1.5 sm:mb-2">كيانات موظفو الشركة:</p>
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
                 {(["service_center", "fixed_pos", "mobile_van"] as const).map(m => {
                   const cfg = MODE_CONFIG[m];
                   const isActive = mode === m;
                   return (
                     <button key={m} type="button" onClick={() => setMode(m)}
-                      className={`rounded-xl border-2 px-3 py-3 text-xs font-semibold transition-all text-center ${isActive ? cfg.activeColor : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"}`}>
-                      <div className="text-xl mb-1">{cfg.icon}</div>
-                      <div>{cfg.label}</div>
+                      className={`rounded-lg sm:rounded-xl border-2 px-1.5 py-2 sm:px-3 sm:py-3 text-[10px] sm:text-xs font-semibold transition-all text-center ${isActive ? cfg.activeColor : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"}`}>
+                      <div className="text-sm sm:text-xl sm:mb-1">{cfg.icon}</div>
+                      <div className="leading-tight">{cfg.label}</div>
                     </button>
                   );
                 })}
@@ -775,13 +773,13 @@ export default function AgentRequestForm() {
 
         {/* Inspection Mode */}
         {mode === "inspection" && (
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="space-y-4">
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+          <div className="grid gap-3 sm:gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-2.5 sm:space-y-4">
+              <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">اختر الوكيل</label>
                 <AgentSelector selected={selectedAgent} onSelect={a => setSelectedAgent(a)} agents={agents} />
               </div>
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
                 <div className="grid gap-4 md:grid-cols-2">
                   <input className="w-full rounded-xl border border-gray-200 p-3 text-sm" value={form.agentName} onChange={e => setForm({ ...form, agentName: e.target.value })} placeholder="اسم الوكيل" />
                   <input className="w-full rounded-xl border border-gray-200 p-3 text-sm" value={form.agentEmail} onChange={e => setForm({ ...form, agentEmail: e.target.value })} placeholder="بريد الوكيل" />
@@ -793,7 +791,7 @@ export default function AgentRequestForm() {
                   <input className="w-full rounded-xl border border-gray-200 p-3 text-sm" value={form.fullAddress} onChange={e => setForm({ ...form, fullAddress: e.target.value })} placeholder="العنوان الكامل" />
                 </div>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
                 <h2 className="font-semibold text-gray-900 mb-3">التراخيص والجاهزية</h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   <select className="w-full rounded-xl border border-gray-200 p-3 text-sm" value={form.documentsComplete} onChange={e => setForm({ ...form, documentsComplete: e.target.value })}>
@@ -818,13 +816,13 @@ export default function AgentRequestForm() {
                   ))}
                 </div>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
                 <button type="button" className="w-full rounded-xl bg-black text-white px-4 py-3 text-sm font-semibold hover:bg-gray-800">حفظ التفتيش</button>
               </div>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-2.5 sm:space-y-4">
               <MapPanel lat={form.latitude} lng={form.longitude} agentLat={selectedAgent?.lat?.toString() ?? ""} agentLng={selectedAgent?.lng?.toString() ?? ""} onChange={(la, ln) => setForm({ ...form, latitude: la, longitude: ln })} />
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
                 <h2 className="font-semibold text-gray-900 mb-3">التقييم</h2>
                 <div className="space-y-3">
                   <ScoreBar label="الجاهزية" value={scores.readiness} color="bg-blue-500" />
@@ -834,7 +832,7 @@ export default function AgentRequestForm() {
                   <ScoreBar label="الخدمات" value={serviceScore} color="bg-indigo-500" />
                 </div>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
+              <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5 space-y-4">
                 <h2 className="font-semibold text-gray-900">المرفقات</h2>
                 {PHOTO_CATS.map(cat => (
                   <PhotoUploadSection key={cat.key} cat={cat} files={photos[cat.key]} previews={photoPreviews[cat.key]}
@@ -847,9 +845,9 @@ export default function AgentRequestForm() {
 
         {/* New Agent Mode */}
         {mode === "new_agent" && (
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="space-y-4">
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+          <div className="grid gap-3 sm:gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-2.5 sm:space-y-4">
+              <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
                 <h2 className="font-semibold text-gray-900 mb-3">بيانات الوكيل</h2>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="md:col-span-2">
@@ -880,7 +878,7 @@ export default function AgentRequestForm() {
                   </div>
                 </div>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
                 <h2 className="font-semibold text-gray-900 mb-3">الوثائق المطلوبة</h2>
                 <div className="space-y-3">
                   {docUploads.map((doc, idx) => (
@@ -888,7 +886,7 @@ export default function AgentRequestForm() {
                   ))}
                 </div>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5">
                 {result && (
                   <div className={`rounded-xl p-3 mb-3 text-sm font-semibold ${result.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
                     {result.msg}
@@ -899,9 +897,9 @@ export default function AgentRequestForm() {
                 </button>
               </div>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-2.5 sm:space-y-4">
               <MapPanel lat={newAgentForm.latitude} lng={newAgentForm.longitude} onChange={(la, ln) => setNewAgentForm(p => ({ ...p, latitude: la, longitude: ln }))} />
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
+              <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm p-3 sm:p-5 space-y-4">
                 <h2 className="font-semibold text-gray-900">المرفقات</h2>
                 {PHOTO_CATS.map(cat => (
                   <PhotoUploadSection key={cat.key} cat={cat} files={photos[cat.key]} previews={photoPreviews[cat.key]}
