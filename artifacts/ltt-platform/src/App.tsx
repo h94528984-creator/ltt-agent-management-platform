@@ -14,6 +14,7 @@ import Tickets from "@/pages/Tickets";
 import Entities from "@/pages/Entities";
 import MapView from "@/pages/MapView";
 import Users from "@/pages/Users";
+import Reports from "@/pages/Reports";
 import { isAuthenticated, clearAuth, getUser } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { Ticket as TicketIcon, X } from "lucide-react";
@@ -141,6 +142,7 @@ function AppLayout() {
           <Route path="/agents" component={Agents} />
           <Route path="/documents" component={Documents} />
           <Route path="/analytics" component={Analytics} />
+          <Route path="/reports" component={Reports} />
           <Route path="/tickets" component={Tickets} />
           <Route path="/entities" component={Entities} />
           <Route path="/map" component={MapView} />
