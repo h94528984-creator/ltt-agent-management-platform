@@ -3,7 +3,6 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
-import { VitePWA } from "vite-plugin-pwa";
 
 const rawPort = process.env.PORT;
 
@@ -38,51 +37,6 @@ export default defineConfig({
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
-    VitePWA({
-      registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "ltt-logo.png"],
-      manifest: {
-        name: "منصة عمليات المراكز والوكلاء",
-        short_name: "LTT عمليات",
-        description: "منصة متابعة عمليات المراكز والوكلاء — التفتيش الميداني وإضافة الكيانات",
-        lang: "ar",
-        dir: "rtl",
-        start_url: basePath,
-        scope: basePath,
-        display: "standalone",
-        orientation: "portrait",
-        background_color: "#0a2540",
-        theme_color: "#0a2540",
-        icons: [
-          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
-          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png" },
-          { src: "maskable-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
-        ],
-      },
-      workbox: {
-        navigateFallback: `${basePath}index.html`,
-        navigateFallbackDenylist: [/^\/api/],
-        globPatterns: ["**/*.{js,css,html,svg,png,ico,woff2}"],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
-            handler: "NetworkFirst",
-            options: { cacheName: "api-cache", networkTimeoutSeconds: 5 },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/,
-            handler: "CacheFirst",
-            options: { cacheName: "google-fonts", expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 } },
-          },
-          {
-            urlPattern: /^https:\/\/.*\.tile\.openstreetmap\.org\/.*/,
-            handler: "CacheFirst",
-            options: { cacheName: "osm-tiles", expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 30 } },
-          },
-        ],
-      },
-      devOptions: { enabled: false },
-    }),
     ...(isDev && process.env.REPL_ID !== undefined
       ? [
           await import("@replit/vite-plugin-cartographer").then((m) =>
