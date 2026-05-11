@@ -88,16 +88,30 @@ export default function MapView() {
     agent: true, service_center: true, fixed_pos: true, mobile_van: true,
   });
   const [heatmap, setHeatmap] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  function shareLink() {
-    const url = `${window.location.origin}/share/map`;
-    navigator.clipboard.writeText(url).then(() => {
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/share/map` : "";
+  const shareText = "خريطة الوكلاء والمراكز — Libya Telecom & Technology";
+
+  function copyLink() {
+    navigator.clipboard.writeText(shareUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }).catch(() => {
-      window.prompt("انسخ الرابط:", url);
+      window.prompt("انسخ الرابط:", shareUrl);
     });
+  }
+
+  async function nativeShare() {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareText, text: shareText, url: shareUrl });
+        setShareOpen(false);
+      } catch { /* user cancelled */ }
+    } else {
+      copyLink();
+    }
   }
 
   useEffect(() => {
@@ -159,9 +173,9 @@ export default function MapView() {
           <p className="text-muted-foreground text-sm mt-1">جميع مواقع الوكلاء وكيانات الشركة على خريطة واحدة</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={shareLink}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm border ${copied ? "bg-green-500 text-white border-green-500" : "bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white border-transparent hover:opacity-90"}`}>
-            {copied ? <><Check size={16} /> تم نسخ الرابط</> : <><Share2 size={16} /> مشاركة الخريطة</>}
+          <button onClick={() => setShareOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white shadow-lg hover:opacity-90 ring-2 ring-orange-300/40">
+            <Share2 size={18} /> مشاركة الخريطة
           </button>
           <button onClick={() => setHeatmap((v) => !v)}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm border ${heatmap ? "bg-orange-500 text-white border-orange-500" : "bg-white border-border hover:bg-muted"}`}>
@@ -195,6 +209,51 @@ export default function MapView() {
           })}
         </div>
       </div>
+
+      {shareOpen && (
+        <div className="fixed inset-0 z-[1000] bg-black/50 flex items-center justify-center p-4" dir="rtl" onClick={() => setShareOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900 flex items-center gap-2"><Share2 size={18} /> مشاركة الخريطة العامة</h3>
+              <button onClick={() => setShareOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500">✕</button>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">رابط عام بدون تسجيل دخول — مناسب لمشاركته مع أي شخص</p>
+            <div className="flex gap-2 mb-4">
+              <input type="text" readOnly value={shareUrl} dir="ltr"
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs bg-gray-50 text-gray-700" />
+              <button onClick={copyLink}
+                className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1 shrink-0 ${copied ? "bg-green-500 text-white" : "bg-gray-900 text-white hover:bg-gray-800"}`}>
+                {copied ? <><Check size={14} /> تم</> : "نسخ"}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <a href={`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`} target="_blank" rel="noopener noreferrer"
+                onClick={() => setShareOpen(false)}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold bg-green-500 text-white hover:bg-green-600">
+                <span>💬</span> واتساب
+              </a>
+              <a href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`} target="_blank" rel="noopener noreferrer"
+                onClick={() => setShareOpen(false)}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold bg-blue-500 text-white hover:bg-blue-600">
+                <span>✈️</span> تيليجرام
+              </a>
+              <a href={`mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`}
+                onClick={() => setShareOpen(false)}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
+                <span>📧</span> البريد
+              </a>
+              <button onClick={nativeShare}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white hover:opacity-90">
+                <Share2 size={14} /> مشاركة أخرى
+              </button>
+            </div>
+            <a href={shareUrl} target="_blank" rel="noopener noreferrer"
+              className="mt-3 block text-center text-xs text-blue-600 hover:underline">
+              👁️ معاينة الرابط في تبويب جديد
+            </a>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden" style={{ height: "calc(100vh - 320px)", minHeight: 480 }}>
         {loading ? (
