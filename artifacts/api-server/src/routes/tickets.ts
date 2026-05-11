@@ -1,6 +1,16 @@
 import { Router, type IRouter } from "express";
-import { db, ticketsTable } from "@workspace/db";
+import { db, ticketsTable, notificationsTable } from "@workspace/db";
 import { eq, and, type SQL } from "drizzle-orm";
+import { requireAuth } from "../middlewares/requireAuth";
+
+async function notify(userId: number | null, type: string, title: string, message: string, entityType: string, entityId: number) {
+  try {
+    await db.insert(notificationsTable).values({ userId, type, title, message, entityType, entityId });
+  } catch { /* ignore */ }
+}
+
+const PRIORITY_LABELS: Record<string, string> = { urgent: "عاجلة", high: "مرتفعة", medium: "متوسطة", low: "منخفضة" };
+const STATUS_LABELS: Record<string, string> = { open: "مفتوحة", in_progress: "قيد التنفيذ", resolved: "محلولة", closed: "مغلقة" };
 import {
   CreateTicketBody,
   UpdateTicketBody,
@@ -24,7 +34,7 @@ router.get("/tickets", async (req, res): Promise<void> => {
   res.json(tickets);
 });
 
-router.post("/tickets", async (req, res): Promise<void> => {
+router.post("/tickets", requireAuth, async (req, res): Promise<void> => {
   const parsed = CreateTicketBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -42,6 +52,18 @@ router.post("/tickets", async (req, res): Promise<void> => {
     latitude: lat,
     longitude: lng,
   }).returning();
+  // Notify the assignee
+  if (ticket && ticket.assignedToId) {
+    const prio = PRIORITY_LABELS[ticket.priority] ?? ticket.priority;
+    await notify(
+      ticket.assignedToId,
+      "ticket_assigned",
+      `تذكرة جديدة موجَّهة إليك (${prio})`,
+      `${ticket.title}${ticket.description ? " — " + ticket.description.slice(0, 80) : ""}`,
+      "ticket",
+      ticket.id,
+    );
+  }
   res.status(201).json(ticket);
 });
 
@@ -59,7 +81,7 @@ router.get("/tickets/:id", async (req, res): Promise<void> => {
   res.json(ticket);
 });
 
-router.patch("/tickets/:id", async (req, res): Promise<void> => {
+router.patch("/tickets/:id", requireAuth, async (req, res): Promise<void> => {
   const params = UpdateTicketParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -70,6 +92,8 @@ router.patch("/tickets/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const [prev] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, params.data.id));
+  if (!prev) { res.status(404).json({ error: "Ticket not found" }); return; }
   const updateData: Record<string, unknown> = {};
   const d = parsed.data;
   if (d.title != null) updateData.title = d.title;
@@ -86,10 +110,28 @@ router.patch("/tickets/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Ticket not found" });
     return;
   }
+  // Notification triggers
+  if (d.assignedToId !== undefined && d.assignedToId !== prev.assignedToId && ticket.assignedToId) {
+    await notify(
+      ticket.assignedToId, "ticket_assigned",
+      "تذكرة موجَّهة إليك",
+      `${ticket.title} — أُسندت إليك`,
+      "ticket", ticket.id,
+    );
+  }
+  if (d.status != null && d.status !== prev.status) {
+    const transition = `${ticket.title}: ${STATUS_LABELS[prev.status] ?? prev.status} → ${STATUS_LABELS[ticket.status] ?? ticket.status}`;
+    if (ticket.assignedToId) {
+      await notify(ticket.assignedToId, "ticket_status_changed", "تغيّرت حالة تذكرتك", transition, "ticket", ticket.id);
+    }
+    if (ticket.createdById && ticket.createdById !== ticket.assignedToId) {
+      await notify(ticket.createdById, "ticket_status_changed", "تغيّرت حالة تذكرة أنشأتها", transition, "ticket", ticket.id);
+    }
+  }
   res.json(ticket);
 });
 
-router.delete("/tickets/:id", async (req, res): Promise<void> => {
+router.delete("/tickets/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) {
     res.status(400).json({ error: "Invalid id" });

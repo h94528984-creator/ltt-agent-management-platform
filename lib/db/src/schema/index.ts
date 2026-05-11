@@ -6,6 +6,7 @@ export * from "./tickets";
 export * from "./inventory";
 export * from "./agentScores";
 export * from "./notifications";
+export * from "./notificationDismissals";
 export * from "./agentRequests";
 export * from "./agentDocuments";
 export * from "./auditLog";

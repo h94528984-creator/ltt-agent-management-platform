@@ -4,6 +4,7 @@ import AgentRequestForm from "@/pages/AgentRequestForm";
 import Login from "@/pages/Login";
 import { isAuthenticated, clearAuth, getUser } from "@/lib/auth";
 import { LogOut } from "lucide-react";
+import InboxPanel from "@/components/InboxPanel";
 
 const queryClient = new QueryClient();
 
@@ -47,13 +48,16 @@ function AuthenticatedApp() {
         <div className="text-sm text-gray-700">
           {user && <><span className="font-semibold">{user.fullName}</span> <span className="text-gray-400 mx-1">·</span> <span className="text-xs text-gray-500">{user.email}</span></>}
         </div>
-        <button
-          onClick={() => { clearAuth(); setAuthed(false); }}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg"
-        >
-          <LogOut size={14} />
-          <span>تسجيل الخروج</span>
-        </button>
+        <div className="flex items-center gap-1">
+          <InboxPanel />
+          <button
+            onClick={() => { clearAuth(); setAuthed(false); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+          >
+            <LogOut size={14} />
+            <span>تسجيل الخروج</span>
+          </button>
+        </div>
       </div>
       <AgentRequestForm />
     </div>

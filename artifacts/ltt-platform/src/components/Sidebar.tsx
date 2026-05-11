@@ -1,9 +1,10 @@
 import { Link, useRoute } from "wouter";
-import { LayoutDashboard, ClipboardList, Users, BarChart3, Map, Ticket, LogOut, UserCheck, FileText, Building2, FileBarChart, History, Image as ImageIcon, Activity, User as UserIcon } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Users, BarChart3, Map, Ticket, LogOut, UserCheck, FileText, Building2, FileBarChart, History, Image as ImageIcon, Activity, User as UserIcon, Inbox as InboxIcon } from "lucide-react";
 import { clearAuth, getUser } from "@/lib/auth";
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "لوحة التحكم" },
+  { href: "/inbox", icon: InboxIcon, label: "صندوق البريد" },
   { href: "/inspections", icon: ClipboardList, label: "تقارير التفتيش", adminOnly: true },
   { href: "/agents", icon: Users, label: "إدارة الوكلاء" },
   { href: "/entities", icon: Building2, label: "كيانات الشركة" },

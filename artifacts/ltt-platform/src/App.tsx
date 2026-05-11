@@ -15,6 +15,7 @@ import Entities from "@/pages/Entities";
 import MapView from "@/pages/MapView";
 import Users from "@/pages/Users";
 import Reports from "@/pages/Reports";
+import Inbox from "@/pages/Inbox";
 import MyAccount from "@/pages/MyAccount";
 import MyStats from "@/pages/MyStats";
 import AuditLog from "@/pages/AuditLog";
@@ -158,6 +159,7 @@ function AppLayout() {
           <Route path="/account" component={MyAccount} />
           <Route path="/my-stats" component={MyStats} />
           <Route path="/gallery" component={Gallery} />
+          <Route path="/inbox" component={Inbox} />
           {isAdmin && <Route path="/audit" component={AuditLog} />}
           <Route component={NotFound} />
         </Switch>

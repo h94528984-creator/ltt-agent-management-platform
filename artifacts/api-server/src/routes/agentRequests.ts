@@ -7,6 +7,7 @@ import nodemailer from "nodemailer";
 import { db, agentRequestsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
@@ -361,7 +362,7 @@ router.get("/agent-requests", async (req, res): Promise<void> => {
 });
 
 // PATCH /api/agent-request/:id/status — authenticated
-router.patch("/agent-request/:id/status", async (req, res): Promise<void> => {
+router.patch("/agent-request/:id/status", requireAuth, async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params["id"] ?? "");
     if (isNaN(id)) { res.status(400).json({ error: "معرف غير صالح" }); return; }
@@ -371,12 +372,30 @@ router.patch("/agent-request/:id/status", async (req, res): Promise<void> => {
       return;
     }
     const { sql } = await import("drizzle-orm");
+    const [prev] = await db.select().from(agentRequestsTable).where(eq(agentRequestsTable.id, id));
+    if (!prev) { res.status(404).json({ error: "الطلب غير موجود" }); return; }
     const [updated] = await db
       .update(agentRequestsTable)
       .set({ status, updatedAt: sql`NOW()` })
       .where(eq(agentRequestsTable.id, id))
       .returning();
     if (!updated) { res.status(404).json({ error: "الطلب غير موجود" }); return; }
+    // Broadcast to all platform users (userId=null = global) when status changes
+    if (status !== prev.status) {
+      const STATUS_AR: Record<string, string> = { pending: "قيد المراجعة", approved: "تمت الموافقة", rejected: "مرفوض", cancelled: "ملغى" };
+      const { notificationsTable } = await import("@workspace/db");
+      const label = updated.entityType === "agent" ? "طلب وكيل" : updated.entityType === "service_center" ? "مركز خدمات" : updated.entityType === "fixed_pos" ? "نقطة بيع ثابتة" : updated.entityType === "mobile_van" ? "سيارة بيع متنقلة" : "عملية تفتيش";
+      try {
+        await db.insert(notificationsTable).values({
+          userId: null,
+          type: "agent_request_status",
+          title: `تحديث حالة ${label}`,
+          message: `${updated.agentName} (${updated.requestId}): ${STATUS_AR[prev.status] ?? prev.status} → ${STATUS_AR[status] ?? status}`,
+          entityType: "agent_request",
+          entityId: updated.id,
+        });
+      } catch { /* ignore */ }
+    }
     res.json(updated);
   } catch (err) {
     req.log.error({ err }, "Failed to update agent request status");
@@ -385,7 +404,7 @@ router.patch("/agent-request/:id/status", async (req, res): Promise<void> => {
 });
 
 // PATCH /api/agent-request/:id — edit entity fields
-router.patch("/agent-request/:id", async (req, res): Promise<void> => {
+router.patch("/agent-request/:id", requireAuth, async (req, res): Promise<void> => {
   try {
     const id = parseInt(req.params["id"] ?? "");
     if (isNaN(id)) { res.status(400).json({ error: "معرف غير صالح" }); return; }
