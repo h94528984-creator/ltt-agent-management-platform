@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { bootstrapDataIfEmpty } from "./lib/bootstrapData";
+import { runMonthlyDocumentAlerts } from "./routes/documents";
 
 const rawPort = process.env["PORT"];
 
@@ -31,6 +32,19 @@ async function start() {
 
     logger.info({ port }, "Server listening");
   });
+
+  // Recurring monthly document alerts — runs hourly, throttled internally to once/30d per doc
+  const ONE_HOUR = 60 * 60 * 1000;
+  const triggerAlerts = async () => {
+    try {
+      const r = await runMonthlyDocumentAlerts();
+      if (r.created > 0) logger.info({ created: r.created, checked: r.checked }, "Monthly document alerts created");
+    } catch (err) {
+      logger.error({ err }, "runMonthlyDocumentAlerts failed");
+    }
+  };
+  setTimeout(triggerAlerts, 30_000);
+  setInterval(triggerAlerts, ONE_HOUR);
 }
 
 start();

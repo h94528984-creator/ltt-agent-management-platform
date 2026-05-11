@@ -6,7 +6,7 @@ import {
   DOC_TYPE_LABELS, DOC_TYPE_OPTIONS, STATUS_LABELS, STATUS_COLORS,
   CHANNEL_LABELS, daysUntilExpiry, formatDate,
 } from "@/lib/documentStatus";
-import { FileText, Search, Plus, Download, Pencil, Trash2, Upload, AlertTriangle, ChevronDown, X, History as HistoryIcon } from "lucide-react";
+import { FileText, Search, Plus, Download, Pencil, Trash2, Upload, AlertTriangle, ChevronDown, X, History as HistoryIcon, LayoutGrid, List, MapPin } from "lucide-react";
 
 interface Document {
   id: number;
@@ -50,6 +50,7 @@ export default function Documents() {
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [editing, setEditing] = useState<Document | "new" | null>(null);
+  const [view, setView] = useState<"cards" | "table">("cards");
 
   const load = useCallback(() => {
     setLoading(true);
@@ -163,7 +164,23 @@ export default function Documents() {
           { v: "expired", l: "منتهي" },
           { v: "suspended", l: "موقوف" },
         ]} />
+        <div className="inline-flex border border-border rounded-lg overflow-hidden">
+          <button onClick={() => setView("cards")} className={`px-3 py-2 text-sm inline-flex items-center gap-1.5 ${view === "cards" ? "bg-primary text-white" : "bg-white hover:bg-muted"}`}>
+            <LayoutGrid size={14} /> بطاقات
+          </button>
+          <button onClick={() => setView("table")} className={`px-3 py-2 text-sm inline-flex items-center gap-1.5 ${view === "table" ? "bg-primary text-white" : "bg-white hover:bg-muted"}`}>
+            <List size={14} /> جدول
+          </button>
+        </div>
       </div>
+
+      {view === "cards" ? (
+        <AgentDocCards
+          documents={filtered}
+          loading={loading}
+          onPick={(d) => setEditing(d)}
+        />
+      ) : (
 
       <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -231,6 +248,7 @@ export default function Documents() {
           </table>
         </div>
       </div>
+      )}
 
       {editing && (
         <DocumentEditor
@@ -240,6 +258,103 @@ export default function Documents() {
           onSaved={() => { setEditing(null); load(); }}
         />
       )}
+    </div>
+  );
+}
+
+function AgentDocCards({ documents, loading, onPick }: {
+  documents: Document[]; loading: boolean; onPick: (d: Document) => void;
+}) {
+  // Group: one card per (agent, doc_type=license preferred) — show worst doc per agent
+  const cards = useMemo(() => {
+    const byAgent = new Map<number, Document[]>();
+    documents.forEach((d) => {
+      const arr = byAgent.get(d.agentId) ?? [];
+      arr.push(d);
+      byAgent.set(d.agentId, arr);
+    });
+    const STATUS_RANK: Record<string, number> = { expired: 0, suspended: 1, expiring_soon: 2, valid: 3 };
+    const result: { agentId: number; agentName: string; agentCity: string | null; channel: string | null; license: Document; total: number }[] = [];
+    byAgent.forEach((docs, agentId) => {
+      const license = docs.find((d) => d.docType === "license") ?? docs[0]!;
+      docs.sort((a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9));
+      const worst = docs[0]!;
+      result.push({
+        agentId,
+        agentName: license.agentName ?? `وكيل #${agentId}`,
+        agentCity: license.agentCity,
+        channel: license.agentChannelType,
+        license: { ...license, status: worst.status },
+        total: docs.length,
+      });
+    });
+    return result.sort((a, b) => a.agentName.localeCompare(b.agentName, "ar"));
+  }, [documents]);
+
+  if (loading) {
+    return <div className="bg-white border border-border rounded-xl p-12 text-center text-muted-foreground">جاري التحميل...</div>;
+  }
+  if (cards.length === 0) {
+    return <div className="bg-white border border-border rounded-xl p-12 text-center text-muted-foreground">لا توجد مستندات</div>;
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      {cards.map((card) => {
+        const c = STATUS_COLORS[card.license.status] ?? STATUS_COLORS.valid!;
+        const days = daysUntilExpiry(card.license.expiryDate);
+        const borderClass =
+          card.license.status === "expired" ? "border-red-300 bg-red-50" :
+          card.license.status === "expiring_soon" ? "border-amber-300 bg-amber-50" :
+          card.license.status === "suspended" ? "border-slate-300 bg-slate-100" :
+          "border-emerald-300 bg-emerald-50";
+        return (
+          <button
+            key={card.agentId}
+            onClick={() => onPick(card.license)}
+            className={`text-right border-2 rounded-xl p-4 hover:shadow-md transition-all ${borderClass}`}
+          >
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-foreground text-sm leading-snug truncate">{card.agentName}</h3>
+                {card.agentCity && (
+                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                    <MapPin size={11} /> {card.agentCity}
+                    {card.channel && <span> • {CHANNEL_LABELS[card.channel] ?? card.channel}</span>}
+                  </p>
+                )}
+              </div>
+              <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ring-1 ${c.bg} ${c.text} ${c.ring}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+                {STATUS_LABELS[card.license.status] ?? card.license.status}
+              </span>
+            </div>
+
+            <div className="bg-white/70 rounded-lg p-2.5 space-y-1.5 border border-white">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">الترخيص:</span>
+                <span className="font-mono text-foreground">{card.license.docNumber ?? "—"}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">ينتهي في:</span>
+                <span className="font-medium text-foreground">{formatDate(card.license.expiryDate)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">المتبقي:</span>
+                {days === null ? <span className="text-muted-foreground">—</span> :
+                  days < 0 ? <span className="text-red-700 font-bold">منتهٍ منذ {Math.abs(days)} يوم</span> :
+                  days <= 30 ? <span className="text-amber-700 font-bold">{days} يوم</span> :
+                  <span className="text-emerald-700 font-medium">{days} يوم</span>}
+              </div>
+              {card.total > 1 && (
+                <div className="text-[11px] text-muted-foreground pt-1 border-t border-border/50">
+                  + {card.total - 1} مستندات أخرى
+                </div>
+              )}
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }

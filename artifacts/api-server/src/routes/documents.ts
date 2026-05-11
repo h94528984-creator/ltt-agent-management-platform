@@ -3,7 +3,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { randomBytes } from "crypto";
-import { db, agentDocumentsTable, documentHistoryTable, agentsTable, DOCUMENT_TYPES, DOCUMENT_STATUSES } from "@workspace/db";
+import { db, agentDocumentsTable, documentHistoryTable, agentsTable, notificationsTable, DOCUMENT_TYPES, DOCUMENT_STATUSES } from "@workspace/db";
 import { eq, desc, and, sql, inArray, lte, gte, isNotNull, type SQL } from "drizzle-orm";
 import * as zod from "zod";
 
@@ -275,6 +275,84 @@ router.get("/documents/non-compliant-agents", async (_req, res): Promise<void> =
       inArray(agentDocumentsTable.docType, ["license", "commercial_record", "contract"]),
     ));
   res.json(rows.map(r => r.agentId));
+});
+
+// ─── Monthly recurring alerts: create notifications for docs whose status is
+//      expiring_soon or expired, throttled to once per 30 days per document.
+//      Safe to call repeatedly; uses alertsSent ledger for dedup.
+export async function runMonthlyDocumentAlerts(): Promise<{ created: number; checked: number; refreshed: number }> {
+  // 1) Refresh persisted statuses from expiryDate so cards stay accurate
+  const allDocs = await db.select().from(agentDocumentsTable);
+  let refreshed = 0;
+  for (const d of allDocs) {
+    if (d.status === "suspended") continue;
+    const newStatus = computeStatus(d.expiryDate, d.status);
+    if (newStatus !== d.status) {
+      await db.update(agentDocumentsTable).set({ status: newStatus }).where(eq(agentDocumentsTable.id, d.id));
+      refreshed++;
+    }
+  }
+
+  // 2) Compute eligibility from expiryDate directly (independent of persisted status)
+  const docs = await db
+    .select({
+      id: agentDocumentsTable.id,
+      agentId: agentDocumentsTable.agentId,
+      docType: agentDocumentsTable.docType,
+      expiryDate: agentDocumentsTable.expiryDate,
+      status: agentDocumentsTable.status,
+      alertsSent: agentDocumentsTable.alertsSent,
+      agentName: agentsTable.name,
+    })
+    .from(agentDocumentsTable)
+    .leftJoin(agentsTable, eq(agentDocumentsTable.agentId, agentsTable.id))
+    .where(isNotNull(agentDocumentsTable.expiryDate));
+
+  let created = 0;
+  const now = new Date();
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+  for (const d of docs) {
+    if (!d.expiryDate) continue;
+    const days = Math.floor((d.expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    // alert window: ≤30 days remaining, or already expired
+    if (days > 30) continue;
+
+    const ledger = d.alertsSent ?? [];
+    const last = ledger[ledger.length - 1];
+    if (last && now.getTime() - new Date(last.sentAt).getTime() < THIRTY_DAYS_MS) continue;
+
+    const isExpired = days < 0;
+    const title = isExpired ? "ترخيص منتهي يحتاج تجديد" : "ترخيص قارب على الانتهاء";
+    const message = isExpired
+      ? `الترخيص الخاص بـ "${d.agentName ?? "وكيل"}" منتهي منذ ${Math.abs(days)} يوم. يجب التجديد فوراً.`
+      : `الترخيص الخاص بـ "${d.agentName ?? "وكيل"}" سينتهي خلال ${days} يوم.`;
+
+    await db.insert(notificationsTable).values({
+      userId: null,
+      type: isExpired ? "document_expired" : "document_expiring",
+      title,
+      message,
+      entityType: "agent_document",
+      entityId: d.id,
+    });
+
+    await db.update(agentDocumentsTable)
+      .set({ alertsSent: [...ledger, { threshold: days, sentAt: now.toISOString() }] })
+      .where(eq(agentDocumentsTable.id, d.id));
+    created++;
+  }
+  return { created, checked: docs.length, refreshed };
+}
+
+router.post("/documents/run-monthly-alerts", async (req, res): Promise<void> => {
+  try {
+    const result = await runMonthlyDocumentAlerts();
+    res.json(result);
+  } catch (err) {
+    req.log.error({ err }, "Failed to run monthly alerts");
+    res.status(500).json({ error: "حدث خطأ" });
+  }
 });
 
 // ─── Serve uploaded files ─────────────────────────────────────────────────
