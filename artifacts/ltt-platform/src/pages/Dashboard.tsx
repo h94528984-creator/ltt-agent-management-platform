@@ -105,7 +105,7 @@ export default function Dashboard() {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">لوحة التحكم</h1>
-        <p className="text-muted-foreground text-sm mt-1">نظرة عامة على أداء المبيعات بالتجزئة — المنطقة الغربية</p>
+        <p className="text-muted-foreground text-sm mt-1">نظرة عامة على عمليات المراكز والوكلاء</p>
       </div>
 
       {stats?.documents && (stats.documents.expired > 0 || stats.documents.expiringSoon > 0) && (

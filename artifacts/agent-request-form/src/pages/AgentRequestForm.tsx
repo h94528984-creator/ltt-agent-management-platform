@@ -731,8 +731,9 @@ export default function AgentRequestForm() {
       <div className="mx-auto max-w-7xl space-y-2.5 sm:space-y-5">
 
         {/* Header */}
-        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 shadow-sm px-3 py-2.5 sm:p-5">
-          <h1 className="text-sm sm:text-2xl font-bold sm:font-black text-gray-900 leading-tight">منصة متابعة عمليات المراكز والوكلاء</h1>
+        <div className="bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] rounded-xl sm:rounded-2xl shadow-sm px-3 py-2.5 sm:p-4 flex items-center gap-3">
+          <img src="/company-logo.png" alt="LTT" className="h-9 w-9 sm:h-12 sm:w-12 object-contain shrink-0 bg-white/10 rounded-lg p-1" />
+          <h1 className="text-sm sm:text-2xl font-bold sm:font-black text-white leading-tight">منصة العمليات الميدانية — المراكز والوكلاء</h1>
         </div>
 
         {/* Mode Selector */}

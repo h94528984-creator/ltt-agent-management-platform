@@ -44,18 +44,29 @@ function AuthenticatedApp() {
 
   return (
     <div dir="rtl">
-      <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between sticky top-0 z-40">
-        <div className="text-sm text-gray-700">
-          {user && <><span className="font-semibold">{user.fullName}</span> <span className="text-gray-400 mx-1">·</span> <span className="text-xs text-gray-500">{user.email}</span></>}
+      <div className="bg-white border-b border-gray-200 px-3 py-1.5 flex items-center justify-between sticky top-0 z-40 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <img src="/company-logo.png" alt="LTT" className="h-8 w-8 object-contain shrink-0" />
+          <div className="text-xs text-gray-700 min-w-0 hidden sm:block">
+            {user && <><span className="font-semibold truncate">{user.fullName}</span></>}
+          </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
+          <a
+            href="/"
+            title="الانتقال إلى لوحة التحكم الإدارية"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(210,75%,38%)] rounded-lg hover:opacity-90"
+          >
+            <span>📊</span>
+            <span className="hidden sm:inline">لوحة التحكم</span>
+          </a>
           <InboxPanel />
           <button
             onClick={() => { clearAuth(); setAuthed(false); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+            className="flex items-center gap-1 px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg"
           >
             <LogOut size={14} />
-            <span>تسجيل الخروج</span>
+            <span className="hidden sm:inline">خروج</span>
           </button>
         </div>
       </div>

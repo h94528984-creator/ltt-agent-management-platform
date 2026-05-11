@@ -44,10 +44,22 @@ export default function Sidebar({ onLogout }: SidebarProps) {
   const user = getUser();
   return (
     <aside className="w-64 min-h-screen bg-sidebar flex flex-col shrink-0">
-      <div className="p-5 border-b border-sidebar-border">
-        <img src="/ltt-tagline.png" alt="LTT" className="h-12 object-contain" />
-        <p className="text-blue-200 text-xs mt-2">نظام إدارة المبيعات بالتجزئة</p>
-        <p className="text-blue-300 text-xs">المنطقة الغربية</p>
+      <div className="p-4 border-b border-sidebar-border">
+        <div className="flex items-center gap-2.5">
+          <img src="/company-logo.png" alt="LTT" className="h-11 w-11 object-contain shrink-0" />
+          <div className="min-w-0">
+            <p className="text-white text-sm font-bold leading-tight">لوحة تحكم عمليات</p>
+            <p className="text-blue-200 text-xs leading-tight">المراكز والوكلاء</p>
+          </div>
+        </div>
+        <a
+          href="/form/"
+          className="mt-3 flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[hsl(28,85%,48%)] to-[hsl(28,85%,55%)] text-white text-xs font-semibold rounded-lg py-2 hover:opacity-90 transition-opacity"
+          title="الانتقال إلى منصة العمليات الميدانية"
+        >
+          <span>🚐</span>
+          <span>منصة العمليات الميدانية</span>
+        </a>
       </div>
 
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">

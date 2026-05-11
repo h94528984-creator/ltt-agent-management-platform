@@ -30,11 +30,12 @@ export default function Login({ onLogin }: LoginProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[hsl(220,55%,12%)] to-[hsl(220,55%,22%)] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[hsl(210,75%,18%)] via-[hsl(210,75%,28%)] to-[hsl(28,85%,42%)] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <img src="/ltt-tagline.png" alt="LTT" className="h-16 object-contain mx-auto mb-3" />
-          <p className="text-blue-200 text-sm">نظام إدارة المبيعات بالتجزئة — المنطقة الغربية</p>
+          <img src="/company-logo.png" alt="LTT" className="h-24 w-24 object-contain mx-auto mb-3 drop-shadow-2xl" />
+          <h1 className="text-white text-xl font-black mb-1">لوحة تحكم عمليات المراكز والوكلاء</h1>
+          <p className="text-blue-100 text-xs">Libya Telecom &amp; Technology</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-2xl p-8">
@@ -75,7 +76,7 @@ export default function Login({ onLogin }: LoginProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[hsl(220,55%,18%)] text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-[hsl(220,55%,22%)] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white rounded-lg py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
               {loading ? "جاري التحقق..." : "دخول"}
