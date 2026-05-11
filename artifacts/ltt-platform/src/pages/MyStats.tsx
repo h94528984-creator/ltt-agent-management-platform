@@ -26,7 +26,7 @@ export default function MyStats() {
   const max = Math.max(1, ...(stats?.activityLast30Days.map((a) => a.c) ?? [1]));
 
   return (
-    <div className="p-6 space-y-5" dir="rtl">
+    <div className="p-3 sm:p-6 space-y-5" dir="rtl">
       <div>
         <h1 className="text-2xl font-bold text-foreground">إحصائياتي الشخصية</h1>
         <p className="text-muted-foreground text-sm mt-1">نشاطك وإنجازاتك في النظام</p>

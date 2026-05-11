@@ -99,7 +99,7 @@ export default function Users() {
   });
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-3 sm:p-6 space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">إدارة المستخدمين</h1>

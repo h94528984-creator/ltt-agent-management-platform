@@ -102,7 +102,7 @@ export default function Dashboard() {
   const topAgents = ranking.slice(0, 10);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 sm:p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">لوحة التحكم</h1>
         <p className="text-muted-foreground text-sm mt-1">نظرة عامة على عمليات المراكز والوكلاء</p>

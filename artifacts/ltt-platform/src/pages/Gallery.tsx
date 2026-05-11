@@ -50,7 +50,7 @@ export default function Gallery() {
   const entityTypes = Array.from(new Set(photos.map((p) => p.source)));
 
   return (
-    <div className="p-6 space-y-5" dir="rtl">
+    <div className="p-3 sm:p-6 space-y-5" dir="rtl">
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <ImageIcon size={24} className="text-pink-500" />

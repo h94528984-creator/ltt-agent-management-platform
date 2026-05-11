@@ -168,8 +168,8 @@ export default function Agents() {
   }
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-end justify-between gap-4">
+    <div className="p-3 sm:p-6 space-y-5">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground">إدارة الوكلاء</h1>
           <p className="text-muted-foreground text-sm mt-1">قاعدة بيانات الوكلاء الموحدة — {agents.length} وكيل مسجل</p>

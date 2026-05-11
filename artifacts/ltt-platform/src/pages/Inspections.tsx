@@ -86,7 +86,7 @@ function DetailModal({ record, onClose, onStatusChange }: { record: AgentRequest
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl font-light leading-none">✕</button>
         </div>
-        <div className="p-6 space-y-5">
+        <div className="p-3 sm:p-6 space-y-5">
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Field label="المفتش" value={record.representativeName} />
             <Field label="المدينة" value={record.city} />
@@ -260,7 +260,7 @@ function CreateOperationModal({ onClose, onCreated }: { onClose: () => void; onC
           <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-3 sm:p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">نوع العملية *</label>
             <div className="grid grid-cols-4 gap-2">
@@ -427,8 +427,8 @@ export default function Inspections() {
   }
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-end justify-between gap-4">
+    <div className="p-3 sm:p-6 space-y-5">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground">تقارير التفتيش الميداني</h1>
           <p className="text-muted-foreground text-sm mt-1">استعراض وإدارة جميع تقارير الجولات التفتيشية</p>

@@ -223,7 +223,7 @@ export default function Analytics() {
   }
 
   return (
-    <div className="p-6 space-y-8" dir="rtl">
+    <div className="p-3 sm:p-6 space-y-8" dir="rtl">
       <div>
         <h1 className="text-2xl font-bold text-foreground">التحليلات الذكية</h1>
         <p className="text-muted-foreground text-sm mt-1">رؤى تحليلية شاملة عن الموقع، الخدمات، الالتزام، والتراخيص</p>

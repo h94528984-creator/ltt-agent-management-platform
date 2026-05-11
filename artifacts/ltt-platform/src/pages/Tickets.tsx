@@ -153,7 +153,7 @@ function CreateTicketModal({ users, entities, agents, onClose, onCreated }: { us
           <h2 className="font-bold text-foreground">إنشاء تذكرة عمل جديدة</h2>
           <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-3 sm:p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">نوع التذكرة *</label>
             <div className="grid grid-cols-5 gap-2">
@@ -371,8 +371,8 @@ export default function Tickets() {
   };
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-end justify-between gap-4">
+    <div className="p-3 sm:p-6 space-y-5">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground">نظام التذاكر</h1>
           <p className="text-muted-foreground text-sm mt-1">إدارة وتتبع مشكلات الوكلاء والبلاغات</p>

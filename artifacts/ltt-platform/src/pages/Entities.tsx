@@ -95,7 +95,7 @@ function EntityModal({ defaultType, editing, onClose, onSaved }: { defaultType: 
           <h2 className="font-bold">{isEdit ? "تعديل كيان" : "إنشاء كيان جديد للشركة"}</h2>
           <button type="button" onClick={onClose}><X size={18} /></button>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-3 sm:p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">نوع الكيان *</label>
             <div className="grid grid-cols-3 gap-2">
@@ -256,8 +256,8 @@ export default function Entities() {
   }));
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-end justify-between gap-4">
+    <div className="p-3 sm:p-6 space-y-5">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground">كيانات الشركة</h1>
           <p className="text-muted-foreground text-sm mt-1">إدارة مراكز الخدمة، نقاط البيع الثابتة، وسيارات البيع المتنقلة</p>

@@ -78,8 +78,8 @@ export default function Inbox() {
   const types = Object.keys(counts.byType);
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-end justify-between gap-4">
+    <div className="p-3 sm:p-6 space-y-5">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <InboxIcon size={24} /> صندوق البريد

@@ -39,7 +39,7 @@ export default function Inventory() {
   const filtered = showLowStockOnly ? lowStock : items;
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-3 sm:p-6 space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-foreground">إدارة المخزون</h1>
         <p className="text-muted-foreground text-sm mt-1">مستويات المخزون والتنبيهات</p>

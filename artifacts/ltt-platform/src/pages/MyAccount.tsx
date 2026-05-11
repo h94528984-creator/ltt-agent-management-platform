@@ -35,7 +35,7 @@ export default function MyAccount() {
   }
 
   return (
-    <div className="p-6 max-w-3xl space-y-5">
+    <div className="p-3 sm:p-6 max-w-3xl space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-foreground">حسابي</h1>
         <p className="text-muted-foreground text-sm mt-1">معلومات الحساب وتغيير كلمة المرور</p>
