@@ -24,7 +24,7 @@ import Gallery from "@/pages/Gallery";
 import NotificationBell from "@/components/NotificationBell";
 import { isAuthenticated, clearAuth, getUser } from "@/lib/auth";
 import { api } from "@/lib/api";
-import { Ticket as TicketIcon, X } from "lucide-react";
+import { Ticket as TicketIcon, X, Menu } from "lucide-react";
 
 interface TicketType {
   id: number;
@@ -105,6 +105,7 @@ function AppLayout() {
   const [, navigate] = useLocation();
   const [assignedTickets, setAssignedTickets] = useState<TicketType[]>([]);
   const [showTicketsPopup, setShowTicketsPopup] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const user = authed ? getUser() : null;
   const isAdmin = user?.role === "admin";
 
@@ -147,9 +148,15 @@ function AppLayout() {
 
   return (
     <div className="flex min-h-screen bg-background" dir="rtl">
-      <Sidebar onLogout={handleLogout} />
-      <main className="flex-1 overflow-auto">
-        <div className="bg-[hsl(220,55%,12%)] text-white px-6 py-2 flex items-center justify-end gap-3">
+      <Sidebar onLogout={handleLogout} mobileOpen={mobileNavOpen} onCloseMobile={() => setMobileNavOpen(false)} />
+      <main className="flex-1 overflow-auto min-w-0">
+        <div className="bg-[hsl(220,55%,12%)] text-white px-3 sm:px-6 py-2 flex items-center justify-between gap-3 sticky top-0 z-30">
+          <button onClick={() => setMobileNavOpen(true)} className="lg:hidden flex items-center gap-2 text-white" aria-label="القائمة">
+            <Menu size={22} />
+            <img src="/company-logo.png" alt="LTT" className="h-7 w-7 object-contain" />
+            <span className="text-sm font-bold">LTT</span>
+          </button>
+          <div className="hidden lg:block" />
           <NotificationBell />
         </div>
         <Switch>
