@@ -268,15 +268,28 @@ export default function MapView() {
               {filtered.map((p) => (
                 <Marker key={`${p.kind}-${p.id}`} position={[p.lat, p.lng]} icon={ICONS[p.kind]}>
                   <Popup>
-                    <div className="text-right text-sm space-y-1" dir="rtl" style={{ minWidth: 200 }}>
+                    <div className="text-right text-sm space-y-1" dir="rtl" style={{ minWidth: 220 }}>
                       <div className="font-bold text-base">{p.name}</div>
                       <div><span className="font-semibold">النوع:</span> {KIND_META[p.kind].label}</div>
                       <div><span className="font-semibold">المدينة:</span> {p.city}</div>
                       <div><span className="font-semibold">الهاتف:</span> {p.phone}</div>
                       <div><span className="font-semibold">التفاصيل:</span> {p.extra}</div>
                       <div><span className="font-semibold">الحالة:</span> {p.status}</div>
-                      <a href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`} target="_blank" rel="noopener noreferrer"
-                        className="inline-block mt-2 text-blue-600 hover:underline text-xs">📍 افتح في Google Maps</a>
+                      <div className="grid grid-cols-2 gap-1.5 mt-2 pt-2 border-t border-gray-200">
+                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700">
+                          🧭 Google Maps
+                        </a>
+                        <a href={`https://waze.com/ul?ll=${p.lat},${p.lng}&navigate=yes`} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[11px] font-bold text-white bg-cyan-600 hover:bg-cyan-700">
+                          🚗 Waze
+                        </a>
+                        <a href={`https://wa.me/?text=${encodeURIComponent(`📍 ${p.name} (${KIND_META[p.kind].label})\n${p.city}\nhttps://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`)}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="col-span-2 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[11px] font-bold text-white bg-green-600 hover:bg-green-700">
+                          💬 مشاركة عبر واتساب
+                        </a>
+                      </div>
                     </div>
                   </Popup>
                 </Marker>

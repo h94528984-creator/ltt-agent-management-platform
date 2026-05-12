@@ -53,6 +53,16 @@ function AuthenticatedApp() {
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <a
+            href="/share/map"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="فتح خريطة الوكلاء والمراكز"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-[hsl(28,85%,48%)] to-[hsl(28,85%,55%)] rounded-lg hover:opacity-90"
+          >
+            <span>🗺️</span>
+            <span className="hidden sm:inline">الخريطة</span>
+          </a>
+          <a
             href="/"
             title="الانتقال إلى لوحة التحكم الإدارية"
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(210,75%,38%)] rounded-lg hover:opacity-90"
