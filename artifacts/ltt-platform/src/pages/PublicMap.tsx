@@ -119,19 +119,29 @@ export default function PublicMap() {
     return c;
   }, [points]);
 
+  const totals = useMemo(() => {
+    const t: Record<MarkerKind, number> = { agent: agents.length, service_center: 0, fixed_pos: 0, mobile_van: 0 };
+    entities.forEach((e) => {
+      if (e.entityType === "service_center") t.service_center++;
+      else if (e.entityType === "fixed_pos") t.fixed_pos++;
+      else if (e.entityType === "mobile_van") t.mobile_van++;
+    });
+    return t;
+  }, [agents, entities]);
+
   const center: [number, number] = filtered.length > 0
     ? [filtered.reduce((s, p) => s + p.lat, 0) / filtered.length, filtered.reduce((s, p) => s + p.lng, 0) / filtered.length]
     : [32.0, 13.5];
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col" dir="rtl">
-      <header className="bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white px-3 py-2.5 flex items-center gap-2 shadow-md">
-        <img src="/company-logo.png" alt="LTT" className="h-9 w-9 object-contain shrink-0 bg-white/10 rounded-lg p-1" />
+      <header className="bg-gradient-to-r from-[hsl(210,75%,28%)] to-[hsl(28,85%,48%)] text-white px-3 sm:px-5 py-3 flex items-center gap-3 shadow-md">
+        <img src="/company-logo.png" alt="LTT" className="h-14 w-14 sm:h-16 sm:w-16 object-contain shrink-0 bg-white rounded-xl p-1.5 shadow-lg" />
         <div className="flex-1 min-w-0">
-          <h1 className="text-sm sm:text-lg font-bold leading-tight flex items-center gap-1.5">
-            <MapPin size={16} /> خريطة الوكلاء والمراكز
+          <h1 className="text-base sm:text-2xl font-black leading-tight flex items-center gap-2">
+            <MapPin size={20} className="shrink-0" /> خريطة الوكلاء والمراكز
           </h1>
-          <p className="text-[10px] sm:text-xs text-blue-50 truncate">Libya Telecom &amp; Technology</p>
+          <p className="text-[11px] sm:text-sm text-blue-50 font-semibold truncate">Libya Telecom &amp; Technology — شركة ليبيا للاتصالات والتقنية</p>
         </div>
         <button onClick={() => setShareOpen(true)}
           className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-[hsl(210,75%,28%)] hover:bg-blue-50 shadow">
@@ -197,7 +207,9 @@ export default function PublicMap() {
                 <span className="w-3 h-3 rounded-full shrink-0" style={{ background: meta.color }} />
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-medium text-gray-900 truncate">{meta.label}</div>
-                  <div className="text-[10px] text-gray-500">{counts[k]} موقع</div>
+                  <div className="text-[10px] text-gray-500">
+                    {counts[k]}{totals[k] !== counts[k] ? ` من ${totals[k]}` : ""} موقع
+                  </div>
                 </div>
               </button>
             );

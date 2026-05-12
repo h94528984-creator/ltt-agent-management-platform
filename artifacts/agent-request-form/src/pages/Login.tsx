@@ -92,6 +92,23 @@ export default function Login({ onLogin }: LoginProps) {
             </button>
           </form>
         </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <a
+            href="/share/map"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold text-white bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 transition-all"
+          >
+            <span>🗺️</span> الخريطة العامة
+          </a>
+          <a
+            href="/"
+            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold text-white bg-white/15 hover:bg-white/25 backdrop-blur border border-white/30 transition-all"
+          >
+            <span>📊</span> لوحة التحكم
+          </a>
+        </div>
       </div>
     </div>
   );
