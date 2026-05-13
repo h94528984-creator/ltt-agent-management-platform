@@ -4,7 +4,11 @@ import tailwindcss from '@tailwindcss/vite';
 
 // =====================================================
 //  LTT Management Platform - Vite Configuration
-//  جاهز للنشر على Vercel
+//  جاهز للنشر على Netlify
+// =====================================================
+//  API calls ستستخدم:
+//  VITE_API_URL = "/.netlify/functions" (Netlify)
+//  أو VITE_API_URL = "/api" (Netlify redirects)
 // =====================================================
 
 export default defineConfig({
@@ -14,7 +18,7 @@ export default defineConfig({
 
   server: {
     host: '0.0.0.0',
-    port: 20147,
+    port: 5173,
   },
 
   build: {
@@ -40,6 +44,8 @@ export default defineConfig({
   },
 
   define: {
+    // استخدم VITE_API_URL من Environment Variables
+    // القيمة الافتراضية: "/api" (لأن Netlify يعيد توجيهها)
     __API_URL__: JSON.stringify(process.env.VITE_API_URL || '/api'),
     __APP_ENV__: JSON.stringify(process.env.NODE_ENV || 'production'),
   },

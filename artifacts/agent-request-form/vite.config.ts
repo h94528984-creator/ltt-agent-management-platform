@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // =====================================================
 //  LTT Agent Inspection Form - Vite Configuration
-//  جاهز للنشر على Vercel
+//  جاهز للنشر على Netlify
 // =====================================================
 
 export default defineConfig({
@@ -14,7 +14,7 @@ export default defineConfig({
 
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    port: 5174,
   },
 
   build: {
@@ -28,10 +28,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          ui: [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-select',
-          ],
         },
       },
     },
