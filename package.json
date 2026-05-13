@@ -5,7 +5,7 @@
   "packageManager": "pnpm@11.1.1",
   "private": true,
   "scripts": {
-    "preinstall": "node -e \"const fs=require('fs'); for (const f of ['package-lock.json','yarn.lock']) fs.rmSync(f,{force:true}); if (!String(process.env.npm_config_user_agent||'').startsWith('pnpm/')) { console.error('Use pnpm instead'); process.exit(1); }\"",
+    "preinstall": "node -e \"const fs=require('fs'); for (const f of ['package-lock.json','yarn.lock']) fs.rmSync(f,{force:true});\"",
     "build": "corepack pnpm run build:cloudflare",
     "build:cloudflare": "corepack pnpm --filter @workspace/ltt-platform run build",
     "typecheck": "corepack pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
