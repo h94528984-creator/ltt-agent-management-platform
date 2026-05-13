@@ -8,11 +8,17 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  # Allow pnpm to update lockfile if config changed
+  PNPM_FLAGS = "--no-frozen-lockfile"
 
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
   included_files = []
+
+# ---- Package Manager Flags ----
+[build.processing]
+  skip_processing = false
 
 # ---- API Redirect: ALL /api/* → single router function ----
 [[redirects]]
