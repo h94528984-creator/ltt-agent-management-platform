@@ -9,7 +9,7 @@ compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "artifacts/ltt-platform/dist"
 
 [build]
-  command = "pnpm run build:cloudflare"
+  command = "pnpm install --no-frozen-lockfile && pnpm run build:cloudflare"
 
 [build.environment]
   NODE_VERSION = "20"
