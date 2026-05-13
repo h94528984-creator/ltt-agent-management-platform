@@ -22,6 +22,14 @@ build/
 .vercel/
 vercel.json.env
 
+# ---- Cloudflare ----
+.wrangler/
+worker/
+
+# ---- Netlify ----
+.netlify/
+
+
 # ---- IDE & Editor ----
 .vscode/
 .idea/

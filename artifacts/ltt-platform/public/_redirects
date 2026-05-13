@@ -1,0 +1,3 @@
+# API routes handled by Pages Functions
+# SPA fallback: all other routes go to index.html
+/*    /index.html    200

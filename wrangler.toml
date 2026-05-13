@@ -1,0 +1,17 @@
+# =========================================================
+#  LTT Agent Management Platform - Cloudflare Configuration
+# =========================================================
+
+name = "ltt-platform"
+compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+pages_build_output_dir = "artifacts/ltt-platform/dist"
+
+[build]
+  command = "pnpm run build:cloudflare"
+
+[build.environment]
+  NODE_VERSION = "20"
+  PNPM_VERSION = "10"
+  PNPM_FLAGS = "--no-frozen-lockfile"

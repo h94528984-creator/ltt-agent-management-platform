@@ -1,8 +1,6 @@
-import { getDb } from '../netlify-db';
+import type { DB } from '../workers-db';
 
-export async function loginUser(email: string, password: string) {
-  const db = getDb();
-  // TODO: تنفيذ استعلام تسجيل الدخول
+export async function loginUser(db: DB, email: string, password: string) {
   const result = await db.execute(
     'SELECT id, email, full_name AS "fullName", role FROM users WHERE email = $1 AND password = $2',
     [email, password],

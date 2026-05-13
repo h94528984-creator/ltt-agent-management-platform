@@ -1,13 +1,11 @@
-import { getDb } from '../netlify-db';
+import type { DB } from '../workers-db';
 
-export async function getDocuments(query?: Record<string, string>) {
-  const db = getDb();
+export async function getDocuments(db: DB, query?: Record<string, string>) {
   const result = await db.execute('SELECT * FROM agent_documents ORDER BY created_at DESC');
   return result.rows || [];
 }
 
-export async function getAgentDocumentStatus() {
-  const db = getDb();
+export async function getAgentDocumentStatus(db: DB) {
   const result = await db.execute(
     `SELECT a.id, a.name,
       CASE
@@ -22,8 +20,7 @@ export async function getAgentDocumentStatus() {
   return result.rows || [];
 }
 
-export async function createDocument(data: Record<string, unknown>) {
-  const db = getDb();
+export async function createDocument(db: DB, data: Record<string, unknown>) {
   const result = await db.execute(
     'INSERT INTO agent_documents (agent_id, type, file_url, expiry_date) VALUES ($1, $2, $3, $4) RETURNING *',
     [data.agentId, data.type, data.fileUrl, data.expiryDate],

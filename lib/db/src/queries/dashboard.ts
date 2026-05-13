@@ -1,7 +1,6 @@
-import { getDb } from '../netlify-db';
+import type { DB } from '../workers-db';
 
-export async function getDashboardStats() {
-  const db = getDb();
+export async function getDashboardStats(db: DB) {
   const [agents, requests, tickets] = await Promise.all([
     db.execute('SELECT COUNT(*) as total FROM agents'),
     db.execute('SELECT COUNT(*) as total FROM agent_requests'),
