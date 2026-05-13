@@ -3,21 +3,12 @@
 //  يستخدم @neondatabase/serverless المتوافق مع
 //  Netlify Functions (serverless)
 // =====================================================
-//  DATABASE_URL يجب أن يكون معرفاً في Environment Variables
-//  في Netlify Dashboard أو عبر ملف .env للتطوير المحلي
-// =====================================================
 
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import * as schema from './schema';
 
 let db: ReturnType<typeof drizzle> | null = null;
 
-/**
- * الحصول على اتصال قاعدة البيانات
- * يستخدم Singleton pattern لتجنب إنشاء اتصالات متعددة
- * في بيئة Netlify Serverless (كل استدعاء قد يكون من instance جديد)
- */
 export function getDb() {
   if (db) return db;
 
@@ -26,21 +17,16 @@ export function getDb() {
   if (!databaseUrl) {
     throw new Error(
       'DATABASE_URL is not configured.\n' +
-      'قم بتعيين DATABASE_URL في Netlify Environment Variables:\n' +
-      '  Netlify Dashboard → Site Settings → Environment Variables\n' +
-      '  أو استخدم: netlify env:set DATABASE_URL "postgresql://..."',
+      'قم بتعيين DATABASE_URL في Netlify Environment Variables.',
     );
   }
 
   const sql = neon(databaseUrl);
-  db = drizzle(sql, { schema, logger: false });
+  db = drizzle(sql, { logger: false });
 
   return db;
 }
 
-/**
- * اختبار الاتصال بقاعدة البيانات
- */
 export async function testConnection(): Promise<{
   connected: boolean;
   error?: string;
@@ -59,9 +45,6 @@ export async function testConnection(): Promise<{
   }
 }
 
-/**
- * تنفيذ استعلام مع معالجة الأخطاء
- */
 export async function executeQuery<T>(
   queryFn: () => Promise<T>,
 ): Promise<{ data?: T; error?: string }> {
@@ -74,9 +57,6 @@ export async function executeQuery<T>(
   }
 }
 
-/**
- * إعادة تعيين اتصال قاعدة البيانات (للتطوير والاختبار)
- */
 export function resetConnection() {
   db = null;
 }

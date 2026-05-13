@@ -1,20 +1,19 @@
 // =====================================================
 //  LTT Database Schema Index
-//  يتم تصدير جميع جداول قاعدة البيانات من هنا
+//  قيد الإنشاء - أضف ملفات schema لكل جدول
 // =====================================================
-//  ملاحظة: هذه ملفات Schema فارغة.
-//  يجب إنشاء ملفات schema لكل جدول في هذا المجلد.
-//  مثال: users.ts, agents.ts, tickets.ts ...
+//  يصدّر Drizzle table definitions
+//  كل جدول له ملف منفصل: users.ts, agents.ts, tickets.ts ...
 // =====================================================
 
-export { users } from './users';
-export { agents } from './agents';
-export { tickets } from './tickets';
-export { inspections } from './inspections';
-export { salesLogs } from './sales-logs';
-export { inventory } from './inventory';
-export { agentScores } from './agent-scores';
-export { notifications } from './notifications';
-export { agentRequests } from './agent-requests';
-export { agentDocuments } from './agent-documents';
-export { documentHistory } from './document-history';
+// TODO: إنشاء ملفات schema للجداول التالية:
+// users, agents, tickets, inspections, sales_logs,
+// inventory, agent_scores, notifications, agent_requests,
+// agent_documents, document_history
+
+export const schema = {};
+
+// مثال على تصدير جدول (بعد إنشاء الملف):
+// export { users } from './users';
+// export { agents } from './agents';
+// export { tickets } from './tickets';
