@@ -96,7 +96,7 @@ npx wrangler pages deploy artifacts/ltt-platform/dist --project-name=ltt-platfor
 In Cloudflare Dashboard → Pages → `ltt-platform` → **Settings** → **Environment Variables**:
 
 ```bash
-DATABASE_URL = "postgresql://neondb_owner:npg_ZoNVL1qhK4Ml@ep-dawn-breeze-apqjp4ad.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL = "postgresql://<user>:<password>@<host>/<database>?sslmode=require"
 NODE_ENV = "production"
 ```
 

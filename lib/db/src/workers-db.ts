@@ -1,7 +1,8 @@
 import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
 
-export type DB = ReturnType<typeof drizzle>;
+export interface DB {
+  execute: (query: string, params?: unknown[]) => Promise<{ rows: any[] }>;
+}
 
 export function createDb(env: { DATABASE_URL: string }): DB {
   const databaseUrl = env.DATABASE_URL;
@@ -14,5 +15,10 @@ export function createDb(env: { DATABASE_URL: string }): DB {
   }
 
   const sql = neon(databaseUrl);
-  return drizzle(sql, { logger: false });
+  return {
+    async execute(query: string, params: unknown[] = []) {
+      const rows = await sql.query(query, params as any[]);
+      return { rows: rows as any[] };
+    },
+  };
 }

@@ -248,7 +248,7 @@ ltt-agent-management-platform/
 ### رابط قاعدة البيانات الخاص بك
 
 ```
-postgresql://neondb_owner:npg_ZoNVL1qhK4Ml@ep-dawn-breeze-apqjp4ad.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require
+postgresql://<user>:<password>@<host>/<database>?sslmode=require
 ```
 
 ⚠️ هذا الرابط سيُستخدم فقط في **Netlify Environment Variables** - لا تضعه في أي ملف كود.
@@ -296,7 +296,7 @@ git push -u origin main
 
 ```
 Key:   DATABASE_URL
-Value: postgresql://neondb_owner:npg_ZoNVL1qhK4Ml@ep-dawn-breeze-apqjp4ad.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require
+Value: postgresql://<user>:<password>@<host>/<database>?sslmode=require
 Scope: All deploy contexts
 ```
 
@@ -322,7 +322,7 @@ cd C:\Users\m.adel\Desktop\Agent-Management-Platform
 netlify init
 
 # 4. أضف Environment Variable
-netlify env:set DATABASE_URL "postgresql://neondb_owner:npg_ZoNVL1qhK4Ml@ep-dawn-breeze-apqjp4ad.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require"
+netlify env:set DATABASE_URL "postgresql://<user>:<password>@<host>/<database>?sslmode=require"
 
 # 5. انشر
 netlify deploy --prod
@@ -336,7 +336,7 @@ netlify deploy --prod
 
 | المتغير | القيمة | البيئات |
 |---------|--------|---------|
-| `DATABASE_URL` | `postgresql://neondb_owner:npg_ZoNVL1qhK4Ml@ep-dawn-breeze-apqjp4ad.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require` | Production, Deploy Preview, Branch Deploy |
+| `DATABASE_URL` | `postgresql://<user>:<password>@<host>/<database>?sslmode=require` | Production, Deploy Preview, Branch Deploy |
 | `VITE_API_URL` | `/api` | Production, Deploy Preview, Branch Deploy |
 
 ### المتغيرات الاختيارية
@@ -375,7 +375,7 @@ npm install -g netlify-cli
 cp .env.example .env
 
 # أضف DATABASE_URL للتطوير المحلي
-echo 'DATABASE_URL="postgresql://neondb_owner:npg_ZoNVL1qhK4Ml@ep-dawn-breeze-apqjp4ad.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require"' >> .env
+echo 'DATABASE_URL="postgresql://<user>:<password>@<host>/<database>?sslmode=require"' >> .env
 ```
 
 ### تشغيل التطوير المحلي
@@ -400,7 +400,7 @@ Netlify Dev يحاكي بيئة Netlify كاملة محلياً:
 ### Push Schema إلى قاعدة البيانات
 
 ```bash
-DATABASE_URL="postgresql://neondb_owner:npg_ZoNVL1qhK4Ml@ep-dawn-breeze-apqjp4ad.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require" \
+DATABASE_URL="postgresql://<user>:<password>@<host>/<database>?sslmode=require" \
   pnpm run db:push
 ```
 
@@ -484,7 +484,7 @@ Git Push → Netlify detects change → Auto-build → Auto-deploy
 ### عبر pg_dump (يدوي)
 
 ```bash
-pg_dump "postgresql://neondb_owner:npg_ZoNVL1qhK4Ml@ep-dawn-breeze-apqjp4ad.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require" \
+pg_dump "postgresql://<user>:<password>@<host>/<database>?sslmode=require" \
   -F c \
   -f backup_$(date +%Y%m%d).sql
 ```
@@ -537,7 +537,7 @@ Access to fetch at '/api/agents' blocked by CORS
 1. اذهب إلى Netlify Dashboard → Environment Variables
 2. تأكد من وجود DATABASE_URL
 3. القيمة:
-   postgresql://neondb_owner:npg_ZoNVL1qhK4Ml@ep-dawn-breeze-apqjp4ad.c-7.us-east-1.aws.neon.tech/neondb?sslmode=require
+   postgresql://<user>:<password>@<host>/<database>?sslmode=require
 4. أعد النشر (Deploy → Redeploy)
 ```
 
@@ -616,3 +616,4 @@ Access to fetch at '/api/agents' blocked by CORS
 > **تم إعداد هذا الدليل بواسطة DevOps Engineer**
 > **LTT Agent Management Platform - Netlify Deployment Guide**
 > **📅 مايو 2026**
+
