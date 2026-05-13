@@ -1,49 +1,60 @@
-# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# ============================================================
+#  LTT Agent Management Platform - .gitignore
+# ============================================================
 
-# compiled output
-dist
-tmp
-out-tsc
+# ---- Dependencies ----
+node_modules/
+.pnpm-store/
+
+# ---- Build output ----
+dist/
+build/
 *.tsbuildinfo
-.expo
-.expo-shared
 
-# dependencies
-node_modules
+# ---- Environment files ----
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
 
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
+# ---- Vercel ----
+.vercel/
+vercel.json.env
 
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# misc
-/.sass-cache
-/connect.lock
-/coverage
-/libpeerconnection.log
-npm-debug.log
-yarn-error.log
-testem.log
-/typings
-
-# System Files
+# ---- IDE & Editor ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 .DS_Store
-Thumbs.db
 
-.cursor/rules/nx-rules.mdc
-.github/instructions/nx.instructions.md
-
-# Replit
-.cache/
+# ---- Replit ----
 .local/
+.agents/
+.config/
+.replit
+.replitignore
+replit.md
+
+# ---- Windows ----
+Thumbs.db
+desktop.ini
+
+# ---- Temporary files ----
+tmp/
+temp/
+*.log
+*.tmp
+
+# ---- PM2 ----
+pm2-*.json
+~pm2-*.json
+ecosystem.config.js
+start-production.bat
+backup-database.bat
+
+# ---- Package manager ----
+package-lock.json
+yarn.lock

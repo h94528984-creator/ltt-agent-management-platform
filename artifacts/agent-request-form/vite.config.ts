@@ -1,79 +1,45 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
-import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
-const rawPort = process.env.PORT;
-
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
-
-const port = Number(rawPort);
-
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
-}
-
-const basePath = process.env.BASE_PATH;
-
-if (!basePath) {
-  throw new Error(
-    "BASE_PATH environment variable is required but was not provided.",
-  );
-}
-
-const isDev = process.env.NODE_ENV !== "production";
+// =====================================================
+//  LTT Agent Inspection Form - Vite Configuration
+//  جاهز للنشر على Vercel
+// =====================================================
 
 export default defineConfig({
-  // The reverse proxy forwards the full /form/* path to this Vite server.
-  // Vite must use basePath in both dev and prod so all asset URLs
-  // (/@vite/client, /form/src/main.tsx, etc.) are routed correctly through the proxy.
-  base: basePath,
-  plugins: [
-    react(),
-    tailwindcss(),
-    runtimeErrorOverlay(),
-    ...(isDev && process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer({
-              root: path.resolve(import.meta.dirname, ".."),
-            }),
-          ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "src"),
-      "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
-    },
-    dedupe: ["react", "react-dom"],
-  },
-  root: path.resolve(import.meta.dirname),
-  build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true,
-  },
+  plugins: [react(), tailwindcss()],
+
+  base: '/form/',
+
   server: {
-    port,
-    strictPort: true,
-    host: "0.0.0.0",
-    allowedHosts: true,
-    fs: {
-      strict: true,
-    },
+    host: '0.0.0.0',
+    port: 5173,
   },
-  preview: {
-    port,
-    host: "0.0.0.0",
-    allowedHosts: true,
+
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    minify: 'esbuild',
+    target: 'es2022',
+    cssMinify: true,
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          ui: [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-select',
+          ],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 500,
+  },
+
+  define: {
+    __API_URL__: JSON.stringify(process.env.VITE_API_URL || '/api'),
+    __APP_ENV__: JSON.stringify(process.env.NODE_ENV || 'production'),
   },
 });

@@ -1,16 +1,47 @@
 {
   "name": "workspace",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "license": "MIT",
+  "private": true,
   "scripts": {
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "build:production": "pnpm -r --filter \"./lib/**\" run build && pnpm -r --filter \"./artifacts/**\" run build",
+    "build:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "start:production": "pnpm run build:production && pm2 start ecosystem.config.js --env production && pm2 save",
+    "start:pm2": "pm2 start ecosystem.config.js --env production",
+    "stop:pm2": "pm2 stop all && pm2 delete all",
+    "restart:pm2": "pm2 restart all",
+    "reload:pm2": "pm2 reload all",
+    "logs:pm2": "pm2 logs",
+    "logs:api": "pm2 logs ltt-api-server --lines 100",
+    "logs:platform": "pm2 logs ltt-platform --lines 50",
+    "logs:form": "pm2 logs ltt-agent-form --lines 50",
+    "monit:pm2": "pm2 monit",
+    "status:pm2": "pm2 status",
+    "save:pm2": "pm2 save",
+    "resurrect:pm2": "pm2 resurrect",
+    "startup:pm2": "pm2 startup",
+    "backup:db": "bash deployment/scripts/backup-db.sh",
+    "restore:db": "bash deployment/scripts/restore-db.sh",
+    "db:push": "pnpm --filter @workspace/db run push",
+    "db:generate": "pnpm --filter @workspace/db run generate",
+    "db:migrate": "pnpm --filter @workspace/db run migrate",
+    "db:studio": "pnpm --filter @workspace/db run studio",
+    "codegen": "pnpm --filter @workspace/api-spec run codegen",
+    "production:setup": "pnpm install --prod=false && pnpm run build:libs && pnpm run build:production",
+    "production:health": "curl -s http://localhost:8080/api/health | python3 -m json.tool",
+    "clean:dist": "find . -type d -name 'dist' -not -path './node_modules/*' -exec rm -rf {} + 2>/dev/null; true",
+    "clean:all": "find . -type d -name 'node_modules' -not -path './node_modules/*' -exec rm -rf {} + 2>/dev/null; true && find . -type d -name 'dist' -not -path './node_modules/*' -exec rm -rf {} + 2>/dev/null; true"
   },
-  "private": true,
   "devDependencies": {
     "typescript": "~5.9.2",
     "prettier": "^3.8.1"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
   }
 }

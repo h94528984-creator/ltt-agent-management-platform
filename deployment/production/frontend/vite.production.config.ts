@@ -3,20 +3,28 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 // =====================================================
-//  LTT Management Platform - Vite Configuration
-//  جاهز للنشر على Vercel
+//  LTT Frontend - Vite Production Configuration
+//  ضع هذا الملف مكان vite.config.ts في كل تطبيق Frontend
 // =====================================================
+
+const SERVER_IP = '192.168.1.50';
+const API_PORT = '8080';
+const API_BASE_URL = `http://${SERVER_IP}:${API_PORT}`;
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
+  // Base path - use absolute path for production
   base: '/',
 
+  // Server settings for production preview
   server: {
     host: '0.0.0.0',
-    port: 20147,
+    port: 20147, // أو 5173 للتطبيق الآخر
+    strictPort: true,
   },
 
+  // Production build settings
   build: {
     outDir: 'dist',
     sourcemap: false,
@@ -39,8 +47,22 @@ export default defineConfig({
     chunkSizeWarningLimit: 500,
   },
 
+  // Environment variables to expose to client
   define: {
-    __API_URL__: JSON.stringify(process.env.VITE_API_URL || '/api'),
-    __APP_ENV__: JSON.stringify(process.env.NODE_ENV || 'production'),
+    __API_URL__: JSON.stringify(API_BASE_URL),
+    __APP_ENV__: JSON.stringify('production'),
+  },
+
+  // Prevent serving source maps in production
+  esbuild: {
+    drop: ['console', 'debugger'],
+  },
+
+  // Preview configuration (used by vite preview)
+  preview: {
+    host: '0.0.0.0',
+    port: 20147,
+    strictPort: true,
+    cors: true,
   },
 });
